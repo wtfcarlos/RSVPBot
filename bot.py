@@ -58,7 +58,7 @@ class bot():
 
         basic_message = {
             'subject': event['message']['subject'],
-            'to': event['message']['display_recipient'],
+            'display_recipient': event['message']['display_recipient'],
             'body': 'It\'s ALIVE!!'
         }
 
