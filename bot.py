@@ -55,15 +55,8 @@ class bot():
     def respond(self, event):
         ''' Now we have an event dict, we should analize it completely.
         '''
-
-        basic_message = {
-            'subject': event['message']['subject'],
-            'display_recipient': event['message']['display_recipient'],
-            'body': 'It\'s ALIVE!!'
-        }
-
         message = self.rsvp.process_event(event)
-        self.send_message(basic_message)
+        self.send_message(message)
         
         
 
@@ -103,7 +96,7 @@ zulip_username = 'rsvp_bot-bot@students.hackerschool.com'
 zulip_api_key = 'xHLjbdNJ8PxxRrDK2ccX5r08rbS8zUcI'
 key_word = 'rsvp'
 
-subscribed_streams = [] 
+subscribed_streams = ['test-bot'] 
 
 new_bot = bot(zulip_username, zulip_api_key, key_word, subscribed_streams)
 new_bot.main()
