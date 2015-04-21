@@ -56,8 +56,14 @@ class bot():
         ''' Now we have an event dict, we should analize it completely.
         '''
 
-        message = self.rsvp.process_event(content)
-        self.send_message(message)
+        basic_message = {
+            'subject': event['message']['subject'],
+            'to': event['message']['display_recipient'],
+            'body': 'It\'s ALIVE!!'
+        }
+
+        message = self.rsvp.process_event(event)
+        self.send_message(basic_message)
         
         
 
@@ -72,17 +78,6 @@ class bot():
             "to": msg['display_recipient'],
             "content": msg['body']
         })
-
-
-
-    def get_params(self):
-        ''' Parameters for giphy get requests
-        '''
-        params = {
-            'api_key': 'dc6zaTOxFJmzC',
-            'tag': self.search_string
-        }
-        return params
 
 
     def main(self):

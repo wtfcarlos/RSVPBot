@@ -6,7 +6,9 @@ env.user = 'django'
 env.hosts = ['hashmap.org']
 
 def deploy():
+	local('git add .')
+	local('git commit -m "Fabric auto deploy"')
+	local('git push origin master')
 	code_dir = '/home/django/RSVPBot'
 	with cd(code_dir):
 		run('git pull')
-		
