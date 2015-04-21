@@ -51,7 +51,8 @@ class RSVP(object):
       body = self.cmd_rsvp_confirm(message, 'yes')
     elif re.match(r'^rsvp no$', content):
       body = self.cmd_rsvp_confirm(message, 'no')
-
+    elif re.match(r'^rsvp summary$', content):
+      body = self.cmd_rsvp_summary(message)
 
     if body:
       return self.create_message_from_message(message, body)
@@ -69,6 +70,11 @@ class RSVP(object):
   def event_id(self, message):
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
+  def cmd_rsvp_summary(self, message):
+    event = self.get_this_event(message)
+    event_id = self.event_id(message)
+
+    return 'summary'
 
   def cmd_rsvp_confirm(self, message, decision):
     # The event must exist.
@@ -77,13 +83,18 @@ class RSVP(object):
 
     other_decision = 'no' if decision == 'yes' else 'yes'
 
+    body = None
+
     if event:
       # Get the sender's name
       sender_name = message['sender_full_name']
 
+      print event
+
       # Is he already in the list of attendees?
       if sender_name not in event[decision]:
         self.events[event_id][decision].append(sender_name)
+        body = u'@**{}** is {} attending!'.format(sender_name, '' if decision == 'yes' else '**not**')
 
       # We need to remove him from the other decision's list, if he's there.
       if sender_name in event[other_decision]:
@@ -92,22 +103,11 @@ class RSVP(object):
       self.commit_events()
 
 
+
     else:
       body = ERROR_NOT_AN_EVENT
 
-  def cmd_rsvp_yes(self, message):
-    # The event must exist.
-    event = self.get_this_event(message)
-    event_id = self.event_id(message)
-
-    if event:
-      # Get the sender's name
-      sender_name = message['sender_full_name']
-      if sender_name not in event['yes']:
-        self.events[event_id]['yes'].append(sender_name)
-        self.commit_events()
-    else:
-      body = ERROR_NOT_AN_EVENT
+    return body
 
   def cmd_rsvp_init(self, message):
 
