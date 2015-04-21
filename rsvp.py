@@ -2,6 +2,10 @@ from __future__ import with_statement
 import re
 import json
 
+ERROR_NOT_AN_EVENT = "This thread is not an RSVPBot event!. Type `rsvp init` to make it into an event."
+ERROR_NOT_AUTHORIZED_TO_DELETE = "Oops! You cannot cancel this event! You're not this event's original creator! Only he can cancel it."
+ERROR_ALREADY_AN_EVENT = "Oops! This thread is already an RSVPBot event!"
+
 class RSVP(object):
 
   def __init__(self):
@@ -43,6 +47,11 @@ class RSVP(object):
       body = self.cmd_rsvp_help(message)
     elif re.match(r'^rsvp cancel$', content):
       body = self.cmd_rsvp_cancel(message)
+    elif re.match(r'^rsvp yes$', content):
+      body = self.cmd_rsvp_confirm(message, 'yes')
+    elif re.match(r'^rsvp no$', content):
+      body = self.cmd_rsvp_confirm(message, 'no')
+
 
     if body:
       return self.create_message_from_message(message, body)
@@ -60,6 +69,46 @@ class RSVP(object):
   def event_id(self, message):
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
+
+  def cmd_rsvp_confirm(self, message, decision):
+    # The event must exist.
+    event = self.get_this_event(message)
+    event_id = self.event_id(message)
+
+    other_decision = 'no' if decision == 'yes' else 'yes'
+
+    if event:
+      # Get the sender's name
+      sender_name = message['sender_full_name']
+
+      # Is he already in the list of attendees?
+      if sender_name not in event[decision]:
+        self.events[event_id][decision].append(sender_name)
+
+      # We need to remove him from the other decision's list, if he's there.
+      if sender_name in event[other_decision]:
+        self.events[event_id][other_decision].remove(sender_name)
+
+      self.commit_events()
+
+
+    else:
+      body = ERROR_NOT_AN_EVENT
+
+  def cmd_rsvp_yes(self, message):
+    # The event must exist.
+    event = self.get_this_event(message)
+    event_id = self.event_id(message)
+
+    if event:
+      # Get the sender's name
+      sender_name = message['sender_full_name']
+      if sender_name not in event['yes']:
+        self.events[event_id]['yes'].append(sender_name)
+        self.commit_events()
+    else:
+      body = ERROR_NOT_AN_EVENT
+
   def cmd_rsvp_init(self, message):
 
     subject = message['subject']
@@ -68,14 +117,17 @@ class RSVP(object):
 
     if event:
       # Event already exists, error message, we can't initialize twice.
-      body = "Oops! This thread is already an RSVPBot event!"
+      body = ERROR_ALREADY_AN_EVENT
     else:
       # Update the dictionary with the new event and commit.
       self.events.update(
         {
           self.event_id(message): {
             'name': subject,
-            'creator': message['sender_id']
+            'description': '',
+            'creator': message['sender_id'],
+            'yes': [],
+            'no': []
           }
         }
       )
@@ -84,7 +136,7 @@ class RSVP(object):
     return body
 
   def cmd_rsvp_help(self, message):
-    body = """**Command**|**Description**\n--- | ---\n**`rsvp yes`**|Marks **you** as attending this event.\n**`rsvp no`**|Marks you as **not** attending this event.\n`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n`rsvp help`|Shows this handy table.|\n`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)|\n`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional)|\n`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\nIf the event has a date and time, RSVPBot will automatically remind everyone who RSVP'd yes 10 minutes before the event gets started."""
+    body = """**Command**|**Description**\n--- | ---\n**`rsvp yes`**|Marks **you** as attending this event.\n**`rsvp no`**|Marks you as **not** attending this event.\n`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n`rsvp help`|Shows this handy table.|\n`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)|\n`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional)|\n`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\nIf the event has a date and time, RSVPBot will automatically remind everyone who RSVP'd yes 10 minutes before the event gets started."""
     return body
 
 
@@ -93,11 +145,9 @@ class RSVP(object):
     event = self.get_this_event(message)
     event_id = self.event_id(message)
 
-    print 'this is cancel!', event
-
     if not event:
       # The event does not exist. We cannot cancel it!
-      body = "This thread is not an RSVPBot event!"
+      body = ERROR_NOT_AN_EVENT
     else:
 
       # Check if the issuer of this command is the event's original creator.
@@ -110,7 +160,7 @@ class RSVP(object):
         self.events.pop(event_id)
         self.commit_events()
       else:
-        body = "Oops! You cannot cancel this event! You're not this event's original creator! Only he can cancel it."
+        body = ERROR_NOT_AUTHORIZED_TO_DELETE
       # TODO: Notify everyone.
 
     return body
