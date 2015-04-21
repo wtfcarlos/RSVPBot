@@ -1,0 +1,114 @@
+#! /usr/local/bin/python
+import zulip
+import json
+import requests
+import random
+
+import rsvp
+
+
+class bot():
+    ''' bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
+        an optional caption or list of captions, and a list of the zulip streams it should be active in.
+        it then posts a caption and a randomly selected gif in response to zulip messages.
+     '''
+    def __init__(self, zulip_username, zulip_api_key, key_word, subscribed_streams=[]):
+        self.username = zulip_username
+        self.api_key = zulip_api_key
+        self.key_word = key_word.lower()
+        self.subscribed_streams = subscribed_streams
+        self.client = zulip.Client(zulip_username, zulip_api_key)
+        self.subscriptions = self.subscribe_to_streams()
+        self.rsvp = rsvp.RSVP()
+
+
+    @property
+    def streams(self):
+        ''' Standardizes a list of streams in the form [{'name': stream}]
+        '''
+        if not self.subscribed_streams:
+            streams = [{'name': stream['name']} for stream in self.get_all_zulip_streams()]
+            return streams
+        else: 
+            streams = [{'name': stream} for stream in self.subscribed_streams]
+            return streams
+
+
+    def get_all_zulip_streams(self):
+        ''' Call Zulip API to get a list of all streams
+        '''
+        response = requests.get('https://api.zulip.com/v1/streams', auth=(self.username, self.api_key))
+        if response.status_code == 200:
+            return response.json()['streams']
+        elif response.status_code == 401:
+            raise RuntimeError('check yo auth')
+        else:
+            raise RuntimeError(':( we failed to GET streams.\n(%s)' % response)
+
+
+    def subscribe_to_streams(self):
+        ''' Subscribes to zulip streams
+        '''
+        self.client.add_subscriptions(self.streams)
+
+
+    def respond(self, event):
+        ''' Now we have an event dict, we should analize it completely.
+        '''
+
+        message = self.rsvp.process_event(content)
+        self.send_message(message)
+        
+        
+
+               
+
+    def send_message(self, msg):
+        ''' Sends a message to zulip stream
+        '''
+        self.client.send_message({
+            "type": "stream",
+            "subject": msg["subject"],
+            "to": msg['display_recipient'],
+            "content": msg['body']
+        })
+
+
+
+    def get_params(self):
+        ''' Parameters for giphy get requests
+        '''
+        params = {
+            'api_key': 'dc6zaTOxFJmzC',
+            'tag': self.search_string
+        }
+        return params
+
+
+    def main(self):
+        ''' Blocking call that runs forever. Calls self.respond() on every event received.
+        '''
+        self.client.call_on_each_event(lambda event: self.respond(event), ['message'])
+
+
+''' The Customization Part!
+    
+    Create a zulip bot under "settings" on zulip.
+    Zulip will give you a username and API key
+    key_word is the text in Zulip you would like the bot to respond to. This may be a 
+        single word or a phrase.
+    search_string is what you want the bot to search giphy for.
+    caption may be one of: [] OR 'a single string' OR ['or a list', 'of strings']
+    subscribed_streams is a list of the streams the bot should be active on. An empty 
+        list defaults to ALL zulip streams
+
+'''
+
+zulip_username = 'rsvp_bot-bot@students.hackerschool.com'
+zulip_api_key = 'xHLjbdNJ8PxxRrDK2ccX5r08rbS8zUcI'
+key_word = 'rsvp'
+
+subscribed_streams = [] 
+
+new_bot = bot(zulip_username, zulip_api_key, key_word, subscribed_streams)
+new_bot.main()
