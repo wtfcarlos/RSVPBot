@@ -2,13 +2,12 @@ import re
 
 class RSVP(object):
 
-	def process_event(self, event):
-		return self.route(event)
+	def process_message(self, message):
+		return self.route(message)
 
 
-	def route(self, event):
+	def route(self, message):
 
-		message = event['message']
 		content = message['content']
 		content = self.normalize_whitespace(content)
 
@@ -16,17 +15,19 @@ class RSVP(object):
 		# rsvp init.
 
 		if re.match(r'^rsvp init$', content):
-			return self.cmd_rsvp_init(event)
+			return self.cmd_rsvp_init(message)
+
+		return None
 		
-	def create_message_from_event(self, event, body):
+	def create_message_from_message(self, message, body):
 		return {
-    	'subject': event['message']['subject'],
-      'display_recipient': event['message']['display_recipient'],
+    	'subject': message['subject'],
+      'display_recipient': message['display_recipient'],
       'body': body
     }
 
-	def cmd_rsvp_init(self, event):
-		return self.create_message_from_event(event, "ACK rsvp init")
+	def cmd_rsvp_init(self, message):
+		return self.create_message_from_message(message, "ACK rsvp init")
 
 	def normalize_whitespace(self, content):
 		# Strips trailing and leading whitespace, and normalizes contiguous 

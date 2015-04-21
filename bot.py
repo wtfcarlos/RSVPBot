@@ -52,11 +52,13 @@ class bot():
         self.client.add_subscriptions(self.streams)
 
 
-    def respond(self, event):
+    def respond(self, message):
         ''' Now we have an event dict, we should analize it completely.
         '''
-        message = self.rsvp.process_event(event)
-        self.send_message(message)
+        message = self.rsvp.process_message(message)
+
+        if message:
+            self.send_message(message)
         
         
 
@@ -65,6 +67,7 @@ class bot():
     def send_message(self, msg):
         ''' Sends a message to zulip stream
         '''
+
         self.client.send_message({
             "type": "stream",
             "subject": msg["subject"],
@@ -76,7 +79,7 @@ class bot():
     def main(self):
         ''' Blocking call that runs forever. Calls self.respond() on every event received.
         '''
-        self.client.call_on_each_event(lambda event: self.respond(event), ['message'])
+        self.client.call_on_each_message(lambda msg: self.respond(msg))
 
 
 ''' The Customization Part!
