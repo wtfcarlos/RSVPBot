@@ -199,7 +199,7 @@ class RSVP(object):
     event = self.events[event_id]
     summary_table = '**%s**' % (event['name'])
     summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n'
-    summary_table = summary_table % ('TODO', event['date'], event['time'] or '(All day)', 'TODO')
+    summary_table = summary_table % (event['description'] or 'N/A', event['date'], event['time'] or '(All day)', event['place'] or 'N/A')
 
 
     confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
@@ -251,7 +251,8 @@ class RSVP(object):
         {
           self.event_id(message): {
             'name': subject,
-            'description': '',
+            'description': None,
+            'place': None,
             'creator': message['sender_id'],
             'yes': [],
             'no': [],
