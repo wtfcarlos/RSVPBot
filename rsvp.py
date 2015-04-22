@@ -17,18 +17,21 @@ MSG_STRING_ATTR_SET = "The %s for this event has been set to **%s**!\n`rsvp help
 
 class RSVP(object):
 
-  def __init__(self):
+  def __init__(self, filename='events.json'):
     """
     When created, this instance will try to open self.filename. It will always
     keep a copy in memory of the whole events dictionary and commit it when necessary.
     """
-    self.filename = 'events.json'
+    self.filename = filename
 
-    with open(self.filename, "r") as f:
-      try:
-        self.events = json.load(f)
-      except ValueError:
-        self.events = {}
+    try:
+      with open(self.filename, "r") as f:
+        try:
+          self.events = json.load(f)
+        except ValueError:
+          self.events = {}
+    except IOError:
+      self.events = {}
 
   def commit_events(self):
     """
@@ -87,7 +90,7 @@ class RSVP(object):
 
         if event:
           if re.match(r'^rsvp cancel$', content):
-            return self.cmd_rsvp_cancel(event_id)
+            return self.cmd_rsvp_cancel(event_id, sender_id=message['sender_id'])
           elif re.match(r'^rsvp yes$', content):
             return self.cmd_rsvp_confirm(message, event_id, 'yes')
           elif re.match(r'^rsvp no$', content):
@@ -168,7 +171,7 @@ class RSVP(object):
     if day in range(1, 32) and month in range(1, 13):
       # TODO: Date validation according to month and day.
       if year >= today.year and month >= today.month and day >= today.day:
-        date_string = "%s-%02d-%02d" % (year, day, month)
+        date_string = str(datetime.date(year, month, day))
         self.events[event_id]['date'] = date_string
         self.commit_events()
         body = MSG_DATE_SET % (month, day, year)
@@ -284,13 +287,13 @@ class RSVP(object):
     return body
 
 
-  def cmd_rsvp_cancel(self, event_id):
+  def cmd_rsvp_cancel(self, event_id, sender_id=None):
     event = self.events[event_id]
     # Check if the issuer of this command is the event's original creator.
     # Only he can delete the event.
     creator = event['creator']
 
-    if creator == message['sender_id']:
+    if creator == sender_id:
       body = "The event has been canceled!"
       self.events.pop(event_id)
       self.commit_events()
