@@ -155,6 +155,11 @@ class RSVP(object):
     event_id = self.event_id(message)
 
     if event:
+      summary_table = '**%s**' % (event['name'])
+      summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n'
+      summary_table = summary_table % ('TODO', event['date'], event['time'] or '(All day)', 'TODO')
+
+
       confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
       confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']))
 
@@ -165,8 +170,10 @@ class RSVP(object):
           '' if row[0] is None else row[0],
           '' if row[1] is None else row[1]
         )
+      else:
+        confirmation_table += '\t|\t'
 
-      body = confirmation_table
+      body = summary_table + '\n\n' + confirmation_table
     else:
       body = ERROR_NOT_AN_EVENT
 
