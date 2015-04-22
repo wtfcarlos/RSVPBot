@@ -1,10 +1,18 @@
 from __future__ import with_statement
 import re
 import json
+import time
+import datetime
 
 ERROR_NOT_AN_EVENT = "This thread is not an RSVPBot event!. Type `rsvp init` to make it into an event."
 ERROR_NOT_AUTHORIZED_TO_DELETE = "Oops! You cannot cancel this event! You're not this event's original creator! Only he can cancel it."
 ERROR_ALREADY_AN_EVENT = "Oops! This thread is already an RSVPBot event!"
+ERROR_TIME_NOT_VALID = "Oops! **%02d:%02d** is not a valid time!"
+ERROR_DATE_NOT_VALID = "Oops! **%02d/%02d/%04d** is not a valid date in the **future**!"
+ERROR_INVALID_COMMAND = "`rsvp set %s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
+
+MSG_DATE_SET = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
+MSG_TIME_SET = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp help` for more options.'
 
 class RSVP(object):
 
@@ -37,34 +45,110 @@ class RSVP(object):
     content = self.normalize_whitespace(content)
     body = None
 
-    if re.match(r'^rsvp init$', content):
-      body = self.cmd_rsvp_init(message)
-    elif re.match(r'^rsvp help$', content):
-      body = self.cmd_rsvp_help(message)
-    elif re.match(r'^rsvp cancel$', content):
-      body = self.cmd_rsvp_cancel(message)
-    elif re.match(r'^rsvp yes$', content):
-      body = self.cmd_rsvp_confirm(message, 'yes')
-    elif re.match(r'^rsvp no$', content):
-      body = self.cmd_rsvp_confirm(message, 'no')
-    elif re.match(r'^rsvp summary$', content):
-      body = self.cmd_rsvp_summary(message)
+    if content.startswith('rsvp'):
 
-    if body:
-      return self.create_message_from_message(message, body)
-    else:
-      return None
+      if re.match(r'^rsvp init$', content):
+        return self.cmd_rsvp_init(message)
+      elif re.match(r'^rsvp help$', content):
+        return self.cmd_rsvp_help(message)
+      elif re.match(r'^rsvp cancel$', content):
+        return self.cmd_rsvp_cancel(message)
+      elif re.match(r'^rsvp yes$', content):
+        return self.cmd_rsvp_confirm(message, 'yes')
+      elif re.match(r'^rsvp no$', content):
+        return self.cmd_rsvp_confirm(message, 'no')
+      elif re.match(r'^rsvp summary$', content):
+        return self.cmd_rsvp_summary(message)
+      elif re.match(r'^rsvp set', content):
+        """
+        The command doesn't match the 'simple' commands, time to match against composite commands.
+        """
+        content = content.replace('rsvp set ', '')
+        match = re.match(r'^time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$', content)
+
+        if match:
+          return self.cmd_rsvp_set_time(
+            message,
+            hours=match.group('hours'),
+            minutes=match.group('minutes')
+          )
+
+        match = re.match(r'^date (?P<month>\d+)/(?P<day>\d+)/(?P<year>\d{4})$', content)
+
+        if match:
+          return self.cmd_rsvp_set_date(
+            message,
+            day=match.group('day'),
+            month=match.group('month'),
+            year=match.group('year')
+          )
+        # ...
+        return ERROR_INVALID_COMMAND % (content)
+
+    return None
     
   def create_message_from_message(self, message, body):
-    return {
-      'subject': message['subject'],
-      'display_recipient': message['display_recipient'],
-      'body': body
-    }
+    if body:
+      return {
+        'subject': message['subject'],
+        'display_recipient': message['display_recipient'],
+        'body': body
+      }
 
 
   def event_id(self, message):
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
+
+
+  def cmd_rsvp_set_date(self, message, day='1', month='1', year='2000'):
+    event = self.get_this_event(message)
+    event_id = self.event_id(message)
+
+    body = ERROR_NOT_AN_EVENT
+
+    if event:
+      today = datetime.date.today()
+      day, month, year = int(day), int(month), int(year)
+
+      if day in range(1, 32) and month in range(1, 13):
+        # TODO: Date validation according to month and day.
+
+        if year >= today.year and month >= today.month and day >= today.day:
+          date_string = "%s-%02d-%02d" % (year, day, month)
+          self.events[event_id]['date'] = date_string
+          self.commit_events()
+          body = MSG_DATE_SET % (month, day, year)
+        else:
+          body = ERROR_DATE_NOT_VALID % (month, day, year)
+      else:
+        body = ERROR_DATE_NOT_VALID % (month, day, year)
+
+    return body
+
+  def cmd_rsvp_set_time(self, message, hours='00', minutes='00'):
+    event = self.get_this_event(message)
+    event_id = self.event_id(message)
+
+    if event:
+      """
+      Make sure the hours are in their valid range
+      """
+      hours, minutes = int(hours), int(minutes)
+
+      if hours in range(0, 24) and minutes in range(0, 60):
+        """
+        We'll store the time as the number of seconds since 00:00
+        """
+        self.events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
+        self.commit_events()
+        body = MSG_TIME_SET % (hours, minutes)
+      else:
+        body = ERROR_TIME_NOT_VALID % (hours, minutes)
+
+    else:
+      body = ERROR_NOT_AN_EVENT
+
+    return body
 
   def cmd_rsvp_summary(self, message):
     event = self.get_this_event(message)
@@ -134,7 +218,9 @@ class RSVP(object):
             'description': '',
             'creator': message['sender_id'],
             'yes': [],
-            'no': []
+            'no': [],
+            'time': None,
+            'date': '%s' % datetime.date.today(),
           }
         }
       )
