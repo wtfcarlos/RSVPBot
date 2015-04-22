@@ -12,6 +12,7 @@ ERROR_DATE_NOT_VALID = "Oops! **%02d/%02d/%04d** is not a valid date in the **fu
 ERROR_INVALID_COMMAND = "`rsvp set %s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
 ERROR_LIMIT_REACHED = "Oh no! The **limit** for this event has been reached!"
 
+MSG_INIT_SUCCESSFUL = 'This thread is now an RSVPBot event! Type `rsvp help` for more options.'
 MSG_DATE_SET = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
 MSG_TIME_SET = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp help` for more options.'
 MSG_STRING_ATTR_SET = "The %s for this event has been set to **%s**!\n`rsvp help` for more options."
@@ -280,7 +281,7 @@ class RSVP(object):
 
   def cmd_rsvp_init(self, message):
     subject = message['subject']
-    body = 'This thread is now an RSVPBot event! Type `rsvp help` for more options.'
+    body = MSG_INIT_SUCCESSFUL
     event = self.get_this_event(message)
 
     if event:
