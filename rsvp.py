@@ -100,7 +100,7 @@ class RSVP(object):
     if event:
       # Get the sender's name
       sender_name = message['sender_full_name']
-      
+
       # Is he already in the list of attendees?
       if sender_name not in event[decision]:
         self.events[event_id][decision].append(sender_name)
@@ -171,8 +171,6 @@ class RSVP(object):
       # TODO: Notify everyone.
 
     return body
-
-
 
 
   def normalize_whitespace(self, content):
