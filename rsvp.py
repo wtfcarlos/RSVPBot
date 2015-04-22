@@ -17,6 +17,10 @@ MSG_TIME_SET = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp h
 class RSVP(object):
 
   def __init__(self):
+    """
+    When created, this instance will try to open self.filename. It will always
+    keep a copy in memory of the whole events dictionary and commit it when necessary.
+    """
     self.filename = 'events.json'
 
     with open(self.filename, "r") as f:
@@ -26,26 +30,48 @@ class RSVP(object):
         self.events = {}
 
   def commit_events(self):
+    """
+    Write the whole events dictionary to the filename file.
+    """
     with open(self.filename, 'w+') as f:
       json.dump(self.events, f)
 
   def __exit__(self, type, value, traceback):
+    """
+    Before the program terminates, commit events.
+    """
     self.commit_events()
 
   def get_this_event(self, message):
+    """
+    Returns the event relevant to this Zulip thread
+    """
     event_id = self.event_id(message)
     return self.events.get(event_id)
 
   def process_message(self, message):
+    """
+    Processes the received message and returns a new message, to send back to the user.
+    """
     body = self.route(message)
     return self.create_message_from_message(message, body)
 
   def route(self, message):
-
+    """
+    To be a valid rsvp command, the string must start with the string rsvp.
+    To ensure that we can match things exactly, we must remove the extra whitespace.
+    We then pattern-match it with every known command pattern.
+    If there's absolutely no match, we return None, which, for the purposes of this program,
+    means no reply.
+    """
     content = message['content']
     content = self.normalize_whitespace(content)
 
     if content.startswith('rsvp'):
+
+      """
+      Only init and help don't need an RSVPBot context (event) to exist
+      """
 
       if re.match(r'^rsvp init$', content):
         return self.cmd_rsvp_init(message)
@@ -61,7 +87,7 @@ class RSVP(object):
         return self.cmd_rsvp_summary(message)
       elif re.match(r'^rsvp set', content):
         """
-        The command doesn't match the 'simple' commands, time to match against composite commands.
+        All the other commands require an event to exist.
         """
         content = content.replace('rsvp set ', '')
         match = re.match(r'^time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$', content)
@@ -88,6 +114,9 @@ class RSVP(object):
     return None
     
   def create_message_from_message(self, message, body):
+    """
+    Convenience method for creating a zulip response message from a given zulip input message.
+    """
     if body:
       return {
         'subject': message['subject'],
@@ -97,6 +126,11 @@ class RSVP(object):
 
 
   def event_id(self, message):
+    """
+    An event's identifier is the concatenation of the 'display_recipient'
+    (zulip slang for the stream's name)
+    and the message's subject (aka the thread's title.)
+    """
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
 
