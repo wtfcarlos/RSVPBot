@@ -59,11 +59,7 @@ class bot():
 
         if message:
             self.send_message(message)
-        
-        
-
-               
-
+            
     def send_message(self, msg):
         ''' Sends a message to zulip stream
         '''

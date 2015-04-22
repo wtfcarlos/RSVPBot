@@ -37,10 +37,6 @@ class RSVP(object):
     content = self.normalize_whitespace(content)
     body = None
 
-    # Match against the most basic command:
-    # rsvp init.
-
-
     if re.match(r'^rsvp init$', content):
       body = self.cmd_rsvp_init(message)
     elif re.match(r'^rsvp help$', content):
@@ -74,7 +70,23 @@ class RSVP(object):
     event = self.get_this_event(message)
     event_id = self.event_id(message)
 
-    return 'summary'
+    if event:
+      confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
+      confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']))
+
+      row_list = map(None, event['yes'], event['no'])
+
+      for row in row_list:
+        confirmation_table += '{}|{}\n'.format(
+          '' if row[0] is None else row[0],
+          '' if row[1] is None else row[1]
+        )
+
+      body = confirmation_table
+    else:
+      body = ERROR_NOT_AN_EVENT
+
+    return body
 
   def cmd_rsvp_confirm(self, message, decision):
     # The event must exist.
@@ -88,9 +100,7 @@ class RSVP(object):
     if event:
       # Get the sender's name
       sender_name = message['sender_full_name']
-
-      print event
-
+      
       # Is he already in the list of attendees?
       if sender_name not in event[decision]:
         self.events[event_id][decision].append(sender_name)
@@ -101,9 +111,6 @@ class RSVP(object):
         self.events[event_id][other_decision].remove(sender_name)
 
       self.commit_events()
-
-
-
     else:
       body = ERROR_NOT_AN_EVENT
 
