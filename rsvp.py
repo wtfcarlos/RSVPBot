@@ -10,10 +10,12 @@ ERROR_ALREADY_AN_EVENT = "Oops! This thread is already an RSVPBot event!"
 ERROR_TIME_NOT_VALID = "Oops! **%02d:%02d** is not a valid time!"
 ERROR_DATE_NOT_VALID = "Oops! **%02d/%02d/%04d** is not a valid date in the **future**!"
 ERROR_INVALID_COMMAND = "`rsvp set %s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
+ERROR_LIMIT_REACHED = "Oh no! The **limit** for this event has been reached!"
 
 MSG_DATE_SET = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
 MSG_TIME_SET = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp help` for more options.'
 MSG_STRING_ATTR_SET = "The %s for this event has been set to **%s**!\n`rsvp help` for more options."
+MSG_ATTENDANCE_LIMIT_SET = "The attendance limit for this event has been set to **%d**! Hurry up and `rsvp yes` now!.\n`rsvp help` for more options"
 
 class RSVP(object):
 
@@ -121,6 +123,14 @@ class RSVP(object):
                 year=match.group('year')
               )
 
+            match = re.match(r'^limit (?P<limit>\d+)$', content)
+            if match:
+              return self.cmd_set_attendance_limit(
+                event_id,
+                attendance_limit=match.group('limit')
+              )
+
+
             match = re.match(r'^(?P<attribute>(place|description)) (?P<argument>.*)', content, flags=re.DOTALL)
             
             if match:
@@ -136,6 +146,7 @@ class RSVP(object):
           else:
             return ERROR_NOT_AN_EVENT
     return None
+
     
   def create_message_from_message(self, message, body):
     """
@@ -157,6 +168,12 @@ class RSVP(object):
     """
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
+
+  def cmd_set_attendance_limit(self, event_id, attendance_limit=None):
+    attendance_limit = int(attendance_limit)
+    self.events[event_id]['limit'] = attendance_limit
+    self.commit_events()
+    return MSG_ATTENDANCE_LIMIT_SET % (attendance_limit)
 
   def cmd_rsvp_set_string_attribute(self, event_id, attribute=None, argument=None):
     self.events[event_id][attribute] = argument
@@ -200,9 +217,21 @@ class RSVP(object):
 
   def cmd_rsvp_summary(self, event_id):
     event = self.events[event_id]
+
+    limit_str = 'No Limit!'
+
+    if event['limit']:
+      limit_str = '%d/%d spots left' % (len(event['yes']), event['limit'])
+
     summary_table = '**%s**' % (event['name'])
-    summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n'
-    summary_table = summary_table % (event['description'] or 'N/A', event['date'], event['time'] or '(All day)', event['place'] or 'N/A')
+    summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n**Limit**|%s\n'
+    summary_table = summary_table % (
+      event['description'] or 'N/A',
+      event['date'],
+      event['time'] or '(All day)',
+      event['place'] or 'N/A',
+      limit_str
+    )
 
 
     confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
@@ -230,8 +259,17 @@ class RSVP(object):
 
     # Is he already in the list of attendees?
     if sender_name not in event[decision]:
-      self.events[event_id][decision].append(sender_name)
-      body = u'@**{}** is {} attending!'.format(sender_name, '' if decision == 'yes' else '**not**')
+
+      if decision == 'yes':
+        if event['limit']:
+          if (len(event['yes']) + 1) <= event['limit']:
+            body = u'@**{}** is {} attending!'.format(sender_name, '' if decision == 'yes' else '**not**')
+            self.events[event_id][decision].append(sender_name)
+          else:
+            body = ERROR_LIMIT_REACHED
+        else:
+          self.events[event_id][decision].append(sender_name)
+          body = u'@**{}** is {} attending!'.format(sender_name, '' if decision == 'yes' else '**not**')
 
     # We need to remove him from the other decision's list, if he's there.
     if sender_name in event[other_decision]:
@@ -260,6 +298,7 @@ class RSVP(object):
             'yes': [],
             'no': [],
             'time': None,
+            'limit': None,
             'date': '%s' % datetime.date.today(),
           }
         }
