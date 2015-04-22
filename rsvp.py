@@ -37,13 +37,13 @@ class RSVP(object):
     return self.events.get(event_id)
 
   def process_message(self, message):
-    return self.route(message)
+    body = self.route(message)
+    return self.create_message_from_message(message, body)
 
   def route(self, message):
 
     content = message['content']
     content = self.normalize_whitespace(content)
-    body = None
 
     if content.startswith('rsvp'):
 
