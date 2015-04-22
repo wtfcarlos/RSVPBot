@@ -77,40 +77,58 @@ class RSVP(object):
         return self.cmd_rsvp_init(message)
       elif re.match(r'^rsvp help$', content):
         return self.cmd_rsvp_help(message)
-      elif re.match(r'^rsvp cancel$', content):
-        return self.cmd_rsvp_cancel(message)
-      elif re.match(r'^rsvp yes$', content):
-        return self.cmd_rsvp_confirm(message, 'yes')
-      elif re.match(r'^rsvp no$', content):
-        return self.cmd_rsvp_confirm(message, 'no')
-      elif re.match(r'^rsvp summary$', content):
-        return self.cmd_rsvp_summary(message)
-      elif re.match(r'^rsvp set', content):
+      else:
         """
         All the other commands require an event to exist.
         """
-        content = content.replace('rsvp set ', '')
-        match = re.match(r'^time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$', content)
+        event = self.get_this_event(message)
+        event_id = self.event_id(message)
 
-        if match:
-          return self.cmd_rsvp_set_time(
-            message,
-            hours=match.group('hours'),
-            minutes=match.group('minutes')
-          )
+        if event:
+          if re.match(r'^rsvp cancel$', content):
+            return self.cmd_rsvp_cancel(message)
+          elif re.match(r'^rsvp yes$', content):
+            return self.cmd_rsvp_confirm(message, 'yes')
+          elif re.match(r'^rsvp no$', content):
+            return self.cmd_rsvp_confirm(message, 'no')
+          elif re.match(r'^rsvp summary$', content):
+            return self.cmd_rsvp_summary(message)
+          elif re.match(r'^rsvp set', content):
+            """
+            The command doesn't match the 'simple' commands, time to match against composite commands.
+            """
+            content = content.replace('rsvp set ', '')
+            match = re.match(r'^time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$', content)
 
-        match = re.match(r'^date (?P<month>\d+)/(?P<day>\d+)/(?P<year>\d{4})$', content)
+            if match:
+              return self.cmd_rsvp_set_time(
+                message,
+                hours=match.group('hours'),
+                minutes=match.group('minutes')
+              )
 
-        if match:
-          return self.cmd_rsvp_set_date(
-            message,
-            day=match.group('day'),
-            month=match.group('month'),
-            year=match.group('year')
-          )
-        # ...
-        return ERROR_INVALID_COMMAND % (content)
+            match = re.match(r'^date (?P<month>\d+)/(?P<day>\d+)/(?P<year>\d{4})$', content)
 
+            if match:
+              return self.cmd_rsvp_set_date(
+                message,
+                day=match.group('day'),
+                month=match.group('month'),
+                year=match.group('year')
+              )
+
+            # if match = re.match(r'^(?P<attribute>(place|description)) (?P<argument>.*)', content, flags=re.DOTALL):
+            #   return self.cmd_rsvp_set_string_attribute(
+            #     message,
+            #     attribute=match.group('attribute'),
+            #     argument=match.group('argument')
+            #   )
+
+            # ...
+            return ERROR_INVALID_COMMAND % (content)
+
+          else:
+            return ERROR_NOT_AN_EVENT
     return None
     
   def create_message_from_message(self, message, body):
