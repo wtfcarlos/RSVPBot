@@ -13,6 +13,7 @@ ERROR_INVALID_COMMAND = "`rsvp set %s` is not a valid RSVPBot command! Type `rsv
 
 MSG_DATE_SET = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
 MSG_TIME_SET = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp help` for more options.'
+MSG_STRING_ATTR_SET = "The %s for this event has been set to **%s**!\n`rsvp help` for more options."
 
 class RSVP(object):
 
@@ -117,12 +118,14 @@ class RSVP(object):
                 year=match.group('year')
               )
 
-            # if match = re.match(r'^(?P<attribute>(place|description)) (?P<argument>.*)', content, flags=re.DOTALL):
-            #   return self.cmd_rsvp_set_string_attribute(
-            #     message,
-            #     attribute=match.group('attribute'),
-            #     argument=match.group('argument')
-            #   )
+            match = re.match(r'^(?P<attribute>(place|description)) (?P<argument>.*)', content, flags=re.DOTALL)
+            
+            if match:
+              return self.cmd_rsvp_set_string_attribute(
+                event_id,
+                attribute=match.group('attribute'),
+                argument=match.group('argument')
+              )
 
             # ...
             return ERROR_INVALID_COMMAND % (content)
@@ -152,8 +155,10 @@ class RSVP(object):
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
 
-  def cmd_rsvp_set_string_attribute(self, message, attribute=None, argument=None):
-    pass
+  def cmd_rsvp_set_string_attribute(self, event_id, attribute=None, argument=None):
+    self.events[event_id][attribute] = argument
+    self.commit_events()
+    return MSG_STRING_ATTR_SET % (attribute, argument)
 
 
   def cmd_rsvp_set_date(self, event_id, day='1', month='1', year='2000'):
