@@ -288,7 +288,21 @@ class RSVP(object):
     return body
 
   def cmd_rsvp_help(self, message):
-    body = """**Command**|**Description**\n--- | ---\n**`rsvp yes`**|Marks **you** as attending this event.\n**`rsvp no`**|Marks you as **not** attending this event.\n`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n`rsvp help`|Shows this handy table.|\n`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)|\n`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)|\n`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\nIf the event has a date and time, RSVPBot will automatically remind everyone who RSVP'd yes 10 minutes before the event gets started."""
+
+    body = "**Command**|**Description**\n"
+    body += "--- | ---\n"
+    body += "**`rsvp yes`**|Marks **you** as attending this event.\n"
+    body += "**`rsvp no`**|Marks you as **not** attending this event.\n"
+    body += "`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n"
+    body += "`rsvp help`|Shows this handy table.\n"
+    body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
+    body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
+    body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
+    body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
+    body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
+    body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\n"
+    body += "If the event has a date and time, RSVPBot will automatically remind everyone who RSVP'd yes 10 minutes before the event gets started."
+
     return body
 
 
