@@ -76,7 +76,7 @@ class RSVP(object):
       if re.match(r'^rsvp init$', content):
         return self.cmd_rsvp_init(message)
       elif re.match(r'^rsvp help$', content):
-        return self.cmd_rsvp_help(message)
+        return self.cmd_rsvp_help()
       else:
         """
         All the other commands require an event to exist.
@@ -86,13 +86,13 @@ class RSVP(object):
 
         if event:
           if re.match(r'^rsvp cancel$', content):
-            return self.cmd_rsvp_cancel(message)
+            return self.cmd_rsvp_cancel(event_id)
           elif re.match(r'^rsvp yes$', content):
-            return self.cmd_rsvp_confirm(message, 'yes')
+            return self.cmd_rsvp_confirm(message, event_id, 'yes')
           elif re.match(r'^rsvp no$', content):
-            return self.cmd_rsvp_confirm(message, 'no')
+            return self.cmd_rsvp_confirm(message, event_id, 'no')
           elif re.match(r'^rsvp summary$', content):
-            return self.cmd_rsvp_summary(message)
+            return self.cmd_rsvp_summary(event_id)
           elif re.match(r'^rsvp set', content):
             """
             The command doesn't match the 'simple' commands, time to match against composite commands.
@@ -102,7 +102,7 @@ class RSVP(object):
 
             if match:
               return self.cmd_rsvp_set_time(
-                message,
+                event_id,
                 hours=match.group('hours'),
                 minutes=match.group('minutes')
               )
@@ -111,7 +111,7 @@ class RSVP(object):
 
             if match:
               return self.cmd_rsvp_set_date(
-                message,
+                event_id,
                 day=match.group('day'),
                 month=match.group('month'),
                 year=match.group('year')
@@ -152,115 +152,87 @@ class RSVP(object):
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
 
-  def cmd_rsvp_set_date(self, message, day='1', month='1', year='2000'):
-    event = self.get_this_event(message)
-    event_id = self.event_id(message)
+  def cmd_rsvp_set_string_attribute(self, message, attribute=None, argument=None):
+    pass
 
-    body = ERROR_NOT_AN_EVENT
 
-    if event:
-      today = datetime.date.today()
-      day, month, year = int(day), int(month), int(year)
+  def cmd_rsvp_set_date(self, event_id, day='1', month='1', year='2000'):
+    today = datetime.date.today()
+    day, month, year = int(day), int(month), int(year)
 
-      if day in range(1, 32) and month in range(1, 13):
-        # TODO: Date validation according to month and day.
-
-        if year >= today.year and month >= today.month and day >= today.day:
-          date_string = "%s-%02d-%02d" % (year, day, month)
-          self.events[event_id]['date'] = date_string
-          self.commit_events()
-          body = MSG_DATE_SET % (month, day, year)
-        else:
-          body = ERROR_DATE_NOT_VALID % (month, day, year)
+    if day in range(1, 32) and month in range(1, 13):
+      # TODO: Date validation according to month and day.
+      if year >= today.year and month >= today.month and day >= today.day:
+        date_string = "%s-%02d-%02d" % (year, day, month)
+        self.events[event_id]['date'] = date_string
+        self.commit_events()
+        body = MSG_DATE_SET % (month, day, year)
       else:
         body = ERROR_DATE_NOT_VALID % (month, day, year)
-
-    return body
-
-  def cmd_rsvp_set_time(self, message, hours='00', minutes='00'):
-    event = self.get_this_event(message)
-    event_id = self.event_id(message)
-
-    if event:
-      """
-      Make sure the hours are in their valid range
-      """
-      hours, minutes = int(hours), int(minutes)
-
-      if hours in range(0, 24) and minutes in range(0, 60):
-        """
-        We'll store the time as the number of seconds since 00:00
-        """
-        self.events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
-        self.commit_events()
-        body = MSG_TIME_SET % (hours, minutes)
-      else:
-        body = ERROR_TIME_NOT_VALID % (hours, minutes)
-
     else:
-      body = ERROR_NOT_AN_EVENT
-
+      body = ERROR_DATE_NOT_VALID % (month, day, year)
     return body
 
-  def cmd_rsvp_summary(self, message):
-    event = self.get_this_event(message)
-    event_id = self.event_id(message)
+  def cmd_rsvp_set_time(self, event_id, hours='00', minutes='00'):
+    """
+    Make sure the hours are in their valid range
+    """
+    hours, minutes = int(hours), int(minutes)
 
-    if event:
-      summary_table = '**%s**' % (event['name'])
-      summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n'
-      summary_table = summary_table % ('TODO', event['date'], event['time'] or '(All day)', 'TODO')
-
-
-      confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
-      confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']))
-
-      row_list = map(None, event['yes'], event['no'])
-
-      for row in row_list:
-        confirmation_table += '{}|{}\n'.format(
-          '' if row[0] is None else row[0],
-          '' if row[1] is None else row[1]
-        )
-      else:
-        confirmation_table += '\t|\t'
-
-      body = summary_table + '\n\n' + confirmation_table
+    if hours in range(0, 24) and minutes in range(0, 60):
+      """
+      We'll store the time as the number of seconds since 00:00
+      """
+      self.events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
+      self.commit_events()
+      body = MSG_TIME_SET % (hours, minutes)
     else:
-      body = ERROR_NOT_AN_EVENT
-
+      body = ERROR_TIME_NOT_VALID % (hours, minutes)
     return body
 
-  def cmd_rsvp_confirm(self, message, decision):
-    # The event must exist.
-    event = self.get_this_event(message)
-    event_id = self.event_id(message)
+  def cmd_rsvp_summary(self, event_id):
+    event = self.events[event_id]
+    summary_table = '**%s**' % (event['name'])
+    summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n'
+    summary_table = summary_table % ('TODO', event['date'], event['time'] or '(All day)', 'TODO')
+
+
+    confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
+    confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']))
+
+    row_list = map(None, event['yes'], event['no'])
+
+    for row in row_list:
+      confirmation_table += '{}|{}\n'.format(
+        '' if row[0] is None else row[0],
+        '' if row[1] is None else row[1]
+      )
+    else:
+      confirmation_table += '\t|\t'
+
+    body = summary_table + '\n\n' + confirmation_table
+    return body
+
+  def cmd_rsvp_confirm(self, message, event_id, decision):
+    event = self.events[event_id]
 
     other_decision = 'no' if decision == 'yes' else 'yes'
+    # Get the sender's name
+    sender_name = message['sender_full_name']
 
-    body = None
+    # Is he already in the list of attendees?
+    if sender_name not in event[decision]:
+      self.events[event_id][decision].append(sender_name)
+      body = u'@**{}** is {} attending!'.format(sender_name, '' if decision == 'yes' else '**not**')
 
-    if event:
-      # Get the sender's name
-      sender_name = message['sender_full_name']
+    # We need to remove him from the other decision's list, if he's there.
+    if sender_name in event[other_decision]:
+      self.events[event_id][other_decision].remove(sender_name)
 
-      # Is he already in the list of attendees?
-      if sender_name not in event[decision]:
-        self.events[event_id][decision].append(sender_name)
-        body = u'@**{}** is {} attending!'.format(sender_name, '' if decision == 'yes' else '**not**')
-
-      # We need to remove him from the other decision's list, if he's there.
-      if sender_name in event[other_decision]:
-        self.events[event_id][other_decision].remove(sender_name)
-
-      self.commit_events()
-    else:
-      body = ERROR_NOT_AN_EVENT
-
+    self.commit_events()
     return body
 
   def cmd_rsvp_init(self, message):
-
     subject = message['subject']
     body = 'This thread is now an RSVPBot event! Type `rsvp help` for more options.'
     event = self.get_this_event(message)
@@ -287,7 +259,7 @@ class RSVP(object):
 
     return body
 
-  def cmd_rsvp_help(self, message):
+  def cmd_rsvp_help(self):
 
     body = "**Command**|**Description**\n"
     body += "--- | ---\n"
@@ -306,29 +278,19 @@ class RSVP(object):
     return body
 
 
-  def cmd_rsvp_cancel(self, message):
+  def cmd_rsvp_cancel(self, event_id):
+    event = self.events[event_id]
+    # Check if the issuer of this command is the event's original creator.
+    # Only he can delete the event.
+    creator = event['creator']
 
-    event = self.get_this_event(message)
-    event_id = self.event_id(message)
-
-    if not event:
-      # The event does not exist. We cannot cancel it!
-      body = ERROR_NOT_AN_EVENT
+    if creator == message['sender_id']:
+      body = "The event has been canceled!"
+      self.events.pop(event_id)
+      self.commit_events()
     else:
-
-      # Check if the issuer of this command is the event's original creator.
-      # Only he can delete the event.
-
-      creator = event['creator']
-
-      if creator == message['sender_id']:
-        body = "The event has been canceled!"
-        self.events.pop(event_id)
-        self.commit_events()
-      else:
-        body = ERROR_NOT_AUTHORIZED_TO_DELETE
-      # TODO: Notify everyone.
-
+      body = ERROR_NOT_AUTHORIZED_TO_DELETE
+    # TODO: Notify everyone.
     return body
 
 
