@@ -56,7 +56,7 @@ class RSVPTest(unittest.TestCase):
 		self.issue_command('rsvp cancel')
 
 		output = self.issue_command('rsvp cancel')
-		self.assertEqual(None, output)
+		self.assertIn('is not an RSVPBot event', output['body'])
 
 	def test_set_time(self):
 		output = self.issue_command('rsvp set time 10:30')
