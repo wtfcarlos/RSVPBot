@@ -1,0 +1,261 @@
+import re
+import datetime
+
+ERROR_INTERNAL                 = "We're having technical difficulties. Please try again later."
+ERROR_NOT_AN_EVENT             = "This thread is not an RSVPBot event!. Type `rsvp init` to make it into an event."
+ERROR_NOT_AUTHORIZED_TO_DELETE = "Oops! You cannot cancel this event! You're not this event's original creator! Only he can cancel it."
+ERROR_ALREADY_AN_EVENT         = "Oops! This thread is already an RSVPBot event!"
+ERROR_TIME_NOT_VALID           = "Oops! **%02d:%02d** is not a valid time!"
+ERROR_DATE_NOT_VALID           = "Oops! **%02d/%02d/%04d** is not a valid date in the **future**!"
+ERROR_INVALID_COMMAND          = "`rsvp set %s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
+ERROR_LIMIT_REACHED            = "Oh no! The **limit** for this event has been reached!"
+
+MSG_INIT_SUCCESSFUL            = 'This thread is now an RSVPBot event! Type `rsvp help` for more options.'
+MSG_DATE_SET                   = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
+MSG_TIME_SET                   = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp help` for more options.'
+MSG_TIME_SET_ALLDAY            = 'This is now an all day long event.'
+MSG_STRING_ATTR_SET            = "The %s for this event has been set to **%s**!\n`rsvp help` for more options."
+MSG_ATTENDANCE_LIMIT_SET       = "The attendance limit for this event has been set to **%d**! Hurry up and `rsvp yes` now!.\n`rsvp help` for more options"
+MSG_EVENT_CANCELED             = "The event has been canceled!"
+MSG_YES_NO_CONFIRMED           = u'@**%s** is %s attending!'
+
+
+"""
+
+Class that represents a response from an RSVPCommand.
+Every call to an RSVPCommand instance's execute() method is expected to return an instance
+of this class.
+
+"""
+class RSVPCommandResponse(object):
+  def __init__(self, body, events):
+    self.body = body
+    self.events = events
+
+
+"""
+Base class for an RSVPCommand
+"""
+class RSVPCommand(object):
+  regex = None
+
+  def __init__(self, *args, **kwargs):
+    pass
+
+  def match(self, input_str):
+    return re.match(self.regex, input_str)
+
+  def execute(self, events, *args, **kwargs):
+    """
+    execute() is just a convenience wrapper around __run()
+    """
+    return self.run(events, *args, **kwargs)
+
+"""
+Base class for a command where an event needs to exist prior to execution
+"""
+class RSVPEventNeededCommand(RSVPCommand):
+
+  def execute(self, events, *args, **kwargs):
+    event = kwargs.get('event')
+    if event:
+      return self.run(events, *args, **kwargs)
+    return RSVPCommandResponse(ERROR_NOT_AN_EVENT, events)
+
+
+class RSVPInitCommand(RSVPCommand):
+  regex = r'^rsvp init$'
+
+  def run(self, events, *args, **kwargs):
+    sender_id   = kwargs.pop('sender_id')
+    event_id    = kwargs.pop('event_id')
+    subject    = kwargs.pop('subject')
+
+    body = MSG_INIT_SUCCESSFUL
+
+    if events.get(event_id):
+      # Event already exists, error message, we can't initialize twice.
+      body = ERROR_ALREADY_AN_EVENT
+    else:
+      # Update the dictionary with the new event and commit.
+      events.update(
+        {
+          event_id: {
+            'name': subject,
+            'description': None,
+            'place': None,
+            'creator': sender_id,
+            'yes': [],
+            'no': [],
+            'time': None,
+            'limit': None,
+            'date': '%s' % datetime.date.today(),
+          }
+        }
+      )
+
+    return RSVPCommandResponse(body, events)
+
+class RSVPHelpCommand(RSVPCommand):
+  regex = r'^rsvp help$'
+
+  def run(self, events, *args, **kwargs):
+    body = "**Command**|**Description**\n"
+    body += "--- | ---\n"
+    body += "**`rsvp yes`**|Marks **you** as attending this event.\n"
+    body += "**`rsvp no`**|Marks you as **not** attending this event.\n"
+    body += "`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n"
+    body += "`rsvp help`|Shows this handy table.\n"
+    body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
+    body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
+    body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
+    body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
+    body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
+    body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
+    body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\n"
+    body += "If the event has a date and time, RSVPBot will automatically remind everyone who RSVP'd yes 10 minutes before the event gets started."
+
+    return RSVPCommandResponse(body, events)
+
+
+class RSVPCancelCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp cancel$'
+
+  def run(self, events, *args, **kwargs):
+    event_id = kwargs.pop('event_id')
+    sender_id = kwargs.pop('sender_id')
+    event = kwargs.pop('event')
+
+    # Check if the issuer of this command is the event's original creator.
+    # Only he can delete the event.
+    creator = event['creator']
+
+    if creator == sender_id:
+      body = MSG_EVENT_CANCELED
+      events.pop(event_id)
+    else:
+      body = ERROR_NOT_AUTHORIZED_TO_DELETE
+
+    return RSVPCommandResponse(body, events)
+
+class RSVPConfirmCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp (?P<decision>(yes|no))$'
+
+  opposite = {
+    'yes': 'no',
+    'no': 'yes'
+  }
+
+  def confirm(self, event, sender_full_name, decision):
+
+    # If they're on the opposite list, take them out.
+    if sender_full_name in event[self.opposite[decision]]:
+      event[self.opposite[decision]].remove(sender_full_name)
+
+    if sender_full_name not in event[decision]:
+      event[decision].append(sender_full_name)
+
+    return event
+
+
+  def attempt_confirm(self, event, sender_full_name, decision, limit):
+    if decision == 'yes':
+      # In this case, we need to do some extra checking for the attendance limit.
+      if limit and not (available_seats + 1 <= limit):
+        raise Exception()
+
+    return self.confirm(event, sender_full_name, decision)
+
+  def run(self, events, *args, **kwargs):
+    event_id = kwargs.pop('event_id')
+    event = kwargs.pop('event')
+    decision = kwargs.pop('decision')
+    sender_full_name = kwargs.pop('sender_full_name')
+
+    limit = event['limit']
+
+
+    body = ERROR_INTERNAL
+
+
+    try:
+      event = self.attempt_confirm(event, sender_full_name, decision, limit)
+
+      # Update the events dict with the new event.
+      events.update(event)
+      response_string = MSG_YES_NO_CONFIRMED % (sender_full_name, '' if decision == 'yes' else '**not**')
+
+      return RSVPCommandResponse(response_string, events)
+
+    except Exception:
+      return RSVPCommandResponse(ERROR_LIMIT_REACHED, events)
+
+
+# ef cmd_set_attendance_limit(self, event_id, attendance_limit=None):
+#     attendance_limit = int(attendance_limit)
+#     self.events[event_id]['limit'] = attendance_limit
+
+#     return MSG_ATTENDANCE_LIMIT_SET % (attendance_limit)
+
+class RSVPSetLimitCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp set limit (?P<limit>\d+)$'
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+    attendance_limit = int(kwargs.pop('limit'))
+    event['limit'] = attendance_limit
+    return RSVPCommandResponse(MSG_ATTENDANCE_LIMIT_SET % (attendance_limit), events)
+
+
+class RSVPSetDateCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp set date (?P<month>\d{1,2})/(?P<day>\d{1,2})/(?P<year>\d{4})$'
+
+  def validate_future_date(self, day, month, year):
+    today = datetime.date.today()
+
+    try:
+      date = datetime.date(year, month, day)
+    except ValueError:
+      return False
+
+    return date >= today
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+    event_id = kwargs.pop('event_id')
+    day = kwargs.pop('day')
+    month = kwargs.pop('month')
+    year = kwargs.pop('year')
+
+    day, month, year = int(day), int(month), int(year)
+
+    if self.validate_future_date(day, month, year):
+      event['date'] = str(datetime.date(year, month, day))
+      events[event_id] = event
+      body = MSG_DATE_SET % (month, day, year)
+    else:
+      body = ERROR_DATE_NOT_VALID % (month, day, year)
+
+    return RSVPCommandResponse(body, events)
+
+
+class RSVPSetTimeCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp set time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$'
+
+  def run(self, events, *args, **kwargs):
+    event_id = kwargs.pop('event_id')
+    hours, minutes = int(kwargs.pop('hours')), int(kwargs.pop('minutes'))
+
+    if hours in range(0, 24) and minutes in range(0, 60):
+      """
+      We'll store the time as the number of seconds since 00:00
+      """
+      events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
+      body = MSG_TIME_SET % (hours, minutes)
+    else:
+      body = ERROR_TIME_NOT_VALID % (hours, minutes)
+      
+    return RSVPCommandResponse(body, events)
+
+
+
