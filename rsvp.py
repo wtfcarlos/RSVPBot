@@ -167,7 +167,7 @@ class RSVP(object):
         'display_recipient': message['display_recipient'],
         'body': body
       }
-
+ 
 
   def event_id(self, message):
     """
