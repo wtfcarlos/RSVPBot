@@ -90,6 +90,9 @@ class RSVP(object):
         commands.RSVPSetLimitCommand(),
         commands.RSVPSetDateCommand(),
         commands.RSVPSetTimeCommand(),
+        commands.RSVPSetTimeAllDayCommand(),
+        commands.RSVPSetStringAttributeCommand(),
+        commands.RSVPSummaryCommand(),
       )
 
       for command in command_list:
@@ -134,56 +137,6 @@ class RSVP(object):
     and the message's subject (aka the thread's title.)
     """
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
-
-
-  def cmd_rsvp_set_string_attribute(self, event_id, attribute=None, argument=None):
-    self.events[event_id][attribute] = argument
-    self.commit_events()
-    return MSG_STRING_ATTR_SET % (attribute, argument)
-
-  def cmd_rsvp_set_time_allday(self, event_id):
-    """
-    Makes the event an all day long event. WOOP WOOP
-    """
-    self.events[event_id]['time'] = None
-    self.commit_events()
-
-    return MSG_TIME_SET_ALLDAY
-
-  def cmd_rsvp_summary(self, event_id):
-    event = self.events[event_id]
-
-    limit_str = 'No Limit!'
-
-    if event['limit']:
-      limit_str = '%d/%d spots left' % (event['limit'] - len(event['yes']), event['limit'])
-
-    summary_table = '**%s**' % (event['name'])
-    summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n**Limit**|%s\n'
-    summary_table = summary_table % (
-      event['description'] or 'N/A',
-      event['date'],
-      event['time'] or '(All day)',
-      event['place'] or 'N/A',
-      limit_str
-    )
-
-
-    confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
-    confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']))
-
-    row_list = map(None, event['yes'], event['no'])
-
-    for row in row_list:
-      confirmation_table += '{}|{}\n'.format(
-        '' if row[0] is None else row[0],
-        '' if row[1] is None else row[1]
-      )
-    else:
-      confirmation_table += '\t|\t'
-
-    body = summary_table + '\n\n' + confirmation_table
-    return body
 
   def normalize_whitespace(self, content):
     # Strips trailing and leading whitespace, and normalizes contiguous

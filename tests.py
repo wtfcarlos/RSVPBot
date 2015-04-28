@@ -152,6 +152,72 @@ class RSVPTest(unittest.TestCase):
 		today = str(datetime.date.today())
 		self.assertEqual(today, self.event['date'])
 
+	def test_new_event_is_all_day(self):
+		self.assertEqual(self.event['time'], None)
+
+	def test_set_event_all_day(self):
+		self.issue_command('rsvp set time 10:30')
+		output = self.issue_command('rsvp set time allday')
+		self.assertEqual(self.event['time'], None)
+		self.assertIn('all day long event.', output['body'])
+
+	def test_set_description(self):
+		output = self.issue_command('rsvp set description This is the description of the event!')
+		self.assertEqual(self.event['description'], 'This is the description of the event!')
+		self.assertIn('The description for this event has been set', output['body'])
+		self.assertIn(self.event['description'], output['body'])
+
+	def test_set_place(self):
+		output = self.issue_command('rsvp set place Hopper!')
+		self.assertEqual(self.event['place'], 'Hopper!')
+		self.assertIn('The place for this event has been set', output['body'])
+		self.assertIn(self.event['place'], output['body'])
+
+	def test_summary_shows_NA_for_place_not_set(self):
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**Where**|N/A', output['body'])
+
+	def test_summary_whos_NA_for_description_not_set(self):
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**What**|N/A', output['body'])
+
+	def test_summary_shows_allday_for_allday_event(self):
+		output = self.issue_command('rsvp summary')
+		self.assertIn('(All day)', output['body'])
+
+	def test_summary_shows_description(self):
+		self.issue_command('rsvp set description test description')
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**What**|test description', output['body'])
+
+	def test_summary_shows_place(self):
+		self.issue_command('rsvp set place Hopper!')
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**Where**|Hopper!', output['body'])
+
+	def test_summary_shows_date(self):
+		self.issue_command('rsvp set date 02/25/2100')
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**When**|2100-02-25', output['body'])
+
+	def test_summary_shows_limit(self):
+		self.issue_command('rsvp set limit 1')
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**Limit**|1/1', output['body'])
+
+	def test_summary_shows_no_limit_on_limit_not_set(self):
+		output = self.issue_command('rsvp summary')
+		self.assertIn('**Limit**|No Limit!', output['body'])
+
+	def test_summary_shows_time(self):
+		self.issue_command('rsvp set time 10:30')
+		output = self.issue_command('rsvp summary')
+		self.assertIn('10:30', output['body'])
+
+	def test_summary_shows_thread_name(self):
+		output = self.issue_command('rsvp summary')
+		self.assertIn('Testing', output['body'])
+
 
 
 if __name__ == '__main__':

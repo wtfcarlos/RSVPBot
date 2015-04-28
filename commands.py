@@ -43,7 +43,7 @@ class RSVPCommand(object):
     pass
 
   def match(self, input_str):
-    return re.match(self.regex, input_str)
+    return re.match(self.regex, input_str, flags=re.DOTALL)
 
   def execute(self, events, *args, **kwargs):
     """
@@ -113,7 +113,6 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
     body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
     body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\n"
-    body += "If the event has a date and time, RSVPBot will automatically remind everyone who RSVP'd yes 10 minutes before the event gets started."
 
     return RSVPCommandResponse(body, events)
 
@@ -257,5 +256,62 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
       
     return RSVPCommandResponse(body, events)
 
+class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp set time allday$'
 
+  def run(self, events, *args, **kwargs):
+    event_id = kwargs.pop('event_id')
+    events[event_id]['time'] = None
+    return RSVPCommandResponse(MSG_TIME_SET_ALLDAY, events)
+
+class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp set (?P<attribute>(place|description)) (?P<value>.+)$'
+
+  def run(self, events, *args, **kwargs):
+    event_id = kwargs.pop('event_id')
+    attribute = kwargs.pop('attribute')
+    value = kwargs.pop('value')
+
+    events[event_id][attribute] = value
+
+    body = MSG_STRING_ATTR_SET % (attribute, value)
+    return RSVPCommandResponse(body, events)
+
+class RSVPSummaryCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp summary$'
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+
+    limit_str = 'No Limit!'
+
+    if event['limit']:
+      limit_str = '%d/%d spots left' % (event['limit'] - len(event['yes']), event['limit'])
+
+    summary_table = '**%s**' % (event['name'])
+    summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n**Limit**|%s\n'
+    summary_table = summary_table % (
+      event['description'] or 'N/A',
+      event['date'],
+      event['time'] or '(All day)',
+      event['place'] or 'N/A',
+      limit_str
+    )
+
+
+    confirmation_table = 'YES ({}) |NO ({}) \n:---:|:---:\n'
+    confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']))
+
+    row_list = map(None, event['yes'], event['no'])
+
+    for row in row_list:
+      confirmation_table += '{}|{}\n'.format(
+        '' if row[0] is None else row[0],
+        '' if row[1] is None else row[1]
+      )
+    else:
+      confirmation_table += '\t|\t'
+
+    body = summary_table + '\n\n' + confirmation_table
+    return RSVPCommandResponse(body, events)
 
