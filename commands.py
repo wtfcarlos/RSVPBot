@@ -113,7 +113,8 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
     body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
     body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
-    body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n\n"
+    body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n"
+    body += "`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.\n"
 
     return RSVPCommandResponse(body, events)
 
@@ -287,6 +288,24 @@ class RSVPPingCommand(RSVPEventNeededCommand):
 
     for participant in event['yes']:
       body += "@**%s** " % participant
+
+    return RSVPCommandResponse(body, events)
+
+class RSVPCreditsCommand(RSVPEventNeededCommand):
+  regex = r'^rsvp credits$'
+
+  def run(self, events, *args, **kwargs):
+
+    contributors = ["Mudit Ameta (SP2'15)"]
+
+    testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
+
+    body = "RSVPBot was created by @**Carlos Flores (SP2'15)**\nWith **contributions** from:\n"
+
+    body += ', '.join(contributors)
+
+    body += "\n and invaluable test feedback from:\n"
+    body += ', '.join(testers)
 
     return RSVPCommandResponse(body, events)
 
