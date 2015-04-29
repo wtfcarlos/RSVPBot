@@ -192,11 +192,6 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       return RSVPCommandResponse(ERROR_LIMIT_REACHED, events)
 
 
-# ef cmd_set_attendance_limit(self, event_id, attendance_limit=None):
-#     attendance_limit = int(attendance_limit)
-#     self.events[event_id]['limit'] = attendance_limit
-
-#     return MSG_ATTENDANCE_LIMIT_SET % (attendance_limit)
 
 class RSVPSetLimitCommand(RSVPEventNeededCommand):
   regex = r'^rsvp set limit (?P<limit>\d+)$'
