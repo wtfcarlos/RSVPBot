@@ -297,7 +297,6 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
 
     contributors = ["Mudit Ameta (SP2'15)"]
-
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
 
     body = "RSVPBot was created by @**Carlos Flores (SP2'15)**\nWith **contributions** from:\n"
@@ -306,6 +305,8 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
     body += "\n and invaluable test feedback from:\n"
     body += ', '.join(testers)
+
+    body += "\nThe code for **RSVPBot** is available at https://github.com/kokeshii/RSVPBot"
 
     return RSVPCommandResponse(body, events)
 
