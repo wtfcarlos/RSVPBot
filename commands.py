@@ -286,7 +286,7 @@ class RSVPPingCommand(RSVPEventNeededCommand):
     body = "**Pinging all participants who RSVP'd!!**\n"
 
     for participant in event['yes']:
-      body += "@**%s**" % participant
+      body += "@**%s** " % participant
 
     return RSVPCommandResponse(body, events)
 
