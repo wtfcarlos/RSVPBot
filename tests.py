@@ -218,6 +218,13 @@ class RSVPTest(unittest.TestCase):
 		output = self.issue_command('rsvp summary')
 		self.assertIn('Testing', output['body'])
 
+	def test_limit_actually_works(self):
+		self.issue_command('rsvp set limit 500')
+		self.issue_command('rsvp yes')
+		output = self.issue_custom_command('rsvp yes', sender_full_name='Sender B')
+
+		self.assertEqual('**@Sender B** is attending!', output['body'])
+		self.assertIn('Sender B', self.event['yes'])
 
 
 if __name__ == '__main__':
