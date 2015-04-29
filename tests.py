@@ -228,6 +228,30 @@ class RSVPTest(unittest.TestCase):
 		self.assertIn('Sender B', self.event['yes'])
 		self.assertEqual(498, self.event['limit'] - len(self.event['yes']))
 
+	def test_ping_yes(self):
+		self.issue_custom_command('rsvp yes', sender_full_name='A')
+		self.issue_custom_command('rsvp yes', sender_full_name='B')
+		self.issue_custom_command('rsvp yes', sender_full_name='C')
+		self.issue_custom_command('rsvp yes', sender_full_name='D')
+
+		self.issue_custom_command('rsvp no', sender_full_name='E')
+		self.issue_custom_command('rsvp no', sender_full_name='F')
+		self.issue_custom_command('rsvp no', sender_full_name='G')
+		self.issue_custom_command('rsvp no', sender_full_name='H')
+
+		output = self.issue_command('rsvp ping')
+
+		self.assertIn('@**A**', output['body'])
+		self.assertIn('@**B**', output['body'])
+		self.assertIn('@**C**', output['body'])
+		self.assertIn('@**D**', output['body'])
+
+		self.assertNotIn('@**E**', output['body'])
+		self.assertNotIn('@**F**', output['body'])
+		self.assertNotIn('@**G**', output['body'])
+		self.assertNotIn('@**H**', output['body'])
+
+
 
 if __name__ == '__main__':
     unittest.main()

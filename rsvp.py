@@ -93,6 +93,7 @@ class RSVP(object):
         commands.RSVPSetTimeAllDayCommand(),
         commands.RSVPSetStringAttributeCommand(),
         commands.RSVPSummaryCommand(),
+        commands.RSVPPingCommand()
       )
 
       for command in command_list:
