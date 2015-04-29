@@ -137,6 +137,9 @@ class RSVPCancelCommand(RSVPEventNeededCommand):
 
     return RSVPCommandResponse(body, events)
 
+class LimitReachedException(Exception):
+  pass
+
 class RSVPConfirmCommand(RSVPEventNeededCommand):
   regex = r'^rsvp (?P<decision>(yes|no))$'
 
@@ -158,10 +161,11 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
 
   def attempt_confirm(self, event, sender_full_name, decision, limit):
-    if decision == 'yes':
+    if decision == 'yes' and limit:
+      available_seats = limit - len(event['yes'])
       # In this case, we need to do some extra checking for the attendance limit.
-      if limit and not (available_seats + 1 <= limit):
-        raise Exception()
+      if (available_seats - 1 < 0):
+        raise LimitReachedException()
 
     return self.confirm(event, sender_full_name, decision)
 
@@ -173,9 +177,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
     limit = event['limit']
 
-
     body = ERROR_INTERNAL
-
 
     try:
       event = self.attempt_confirm(event, sender_full_name, decision, limit)
@@ -186,7 +188,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
       return RSVPCommandResponse(response_string, events)
 
-    except Exception:
+    except LimitReachedException:
       return RSVPCommandResponse(ERROR_LIMIT_REACHED, events)
 
 
@@ -200,6 +202,7 @@ class RSVPSetLimitCommand(RSVPEventNeededCommand):
   regex = r'^rsvp set limit (?P<limit>\d+)$'
 
   def run(self, events, *args, **kwargs):
+
     event = kwargs.pop('event')
     attendance_limit = int(kwargs.pop('limit'))
     event['limit'] = attendance_limit

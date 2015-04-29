@@ -65,6 +65,7 @@ class RSVPTest(unittest.TestCase):
 	def test_rsvp_yes_with_no_prior_reservation(self):
 		output = self.issue_command('rsvp yes')
 
+		self.assertEqual(None, self.event['limit'])
 		self.assertIn('is  attending!', output['body'])
 		self.assertIn('Tester', self.event['yes'])
 		self.assertNotIn('Tester', self.event['no'])
@@ -223,8 +224,9 @@ class RSVPTest(unittest.TestCase):
 		self.issue_command('rsvp yes')
 		output = self.issue_custom_command('rsvp yes', sender_full_name='Sender B')
 
-		self.assertEqual('**@Sender B** is attending!', output['body'])
+		self.assertEqual('@**Sender B** is  attending!', output['body'])
 		self.assertIn('Sender B', self.event['yes'])
+		self.assertEqual(498, self.event['limit'] - len(self.event['yes']))
 
 
 if __name__ == '__main__':
