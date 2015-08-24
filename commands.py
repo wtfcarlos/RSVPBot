@@ -151,6 +151,11 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     'no': 'yes'
   }
 
+  def match(self, input_str):
+    input_str = self.filter_for_fuck_yes_and_other_enthusiastic_confirmations(input_str)
+
+    return re.match(self.regex, input_str, flags=re.DOTALL)
+
   def confirm(self, event, sender_full_name, decision):
 
     # If they're on the opposite list, take them out.
@@ -162,6 +167,13 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
     return event
 
+  def filter_for_fuck_yes_and_other_enthusiastic_confirmations(self, input_str):
+    # I'm terrible using regex, this is covering, for example, "fuck yes", "yessssssss", "yeah!" and uppercases
+    # Can be expanded to more
+    if bool(re.search('yes|yeah', input_str.lower())):
+        return 'rsvp yes'
+
+    return input_str
 
   def attempt_confirm(self, event, sender_full_name, decision, limit):
     if decision == 'yes' and limit:
