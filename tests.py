@@ -251,6 +251,19 @@ class RSVPTest(unittest.TestCase):
 		self.assertNotIn('@**G**', output['body'])
 		self.assertNotIn('@**H**', output['body'])
 
+	def test_ping_message(self):
+		self.issue_custom_command('rsvp yes', sender_full_name='A')
+
+		output = self.issue_command('rsvp ping message!!!')
+
+		self.assertIn('@**A**', output['body'])
+		self.assertIn('message!!!', output['body'])
+
+	def test_add_description_with_message_including_yeah(self):
+		output = self.issue_command('rsvp set description This is the description of the event! yeah!')
+		self.assertEqual(self.event['description'], 'This is the description of the event! yeah!')
+		self.assertIn('The description for this event has been set', output['body'])
+		self.assertIn(self.event['description'], output['body'])
 
 
 if __name__ == '__main__':

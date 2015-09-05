@@ -107,7 +107,7 @@ class RSVPHelpCommand(RSVPCommand):
     body += "**`rsvp no`**|Marks you as **not** attending this event.\n"
     body += "`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n"
     body += "`rsvp help`|Shows this handy table.\n"
-    body += "`rsvp ping`|Pings everyone that has RSVP'd so far.\n"
+    body += "`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.\n"
     body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
     body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
     body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
@@ -280,17 +280,23 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
 
 
 class RSVPPingCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp ping$'
+  regex = r'^(rsvp ping)$|(rsvp ping (?P<message>.+))$'
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
+    message = kwargs.get('message')
 
     body = "**Pinging all participants who RSVP'd!!**\n"
 
     for participant in event['yes']:
       body += "@**%s** " % participant
 
+    if message:
+      body += ('\n' + message)
+
     return RSVPCommandResponse(body, events)
+
+
 
 class RSVPCreditsCommand(RSVPEventNeededCommand):
   regex = r'^rsvp credits$'
