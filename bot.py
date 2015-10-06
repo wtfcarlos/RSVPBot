@@ -39,7 +39,7 @@ class bot():
     def get_all_zulip_streams(self):
         ''' Call Zulip API to get a list of all streams
         '''
-        response = requests.get(self.site + '/v1/streams', auth=(self.username, self.api_key))
+        response = requests.get(self.client.base_url + 'v1/streams', auth=(self.username, self.api_key))
         if response.status_code == 200:
             return response.json()['streams']
         elif response.status_code == 401:
