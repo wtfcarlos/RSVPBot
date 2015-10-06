@@ -57,7 +57,6 @@ class bot():
     def respond(self, message):
         ''' Now we have an event dict, we should analize it completely.
         '''
-        print message
         message = self.rsvp.process_message(message)
 
         if message:
@@ -78,7 +77,6 @@ class bot():
     def main(self):
         ''' Blocking call that runs forever. Calls self.respond() on every event received.
         '''
-        print "let's go!"
         self.client.call_on_each_message(lambda msg: self.respond(msg))
 
 
