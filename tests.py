@@ -265,6 +265,29 @@ class RSVPTest(unittest.TestCase):
 		self.assertIn('The description for this event has been set', output['body'])
 		self.assertIn(self.event['description'], output['body'])
 
+	def test_rsvp_ping_with_yes(self):
+		self.issue_custom_command('rsvp yes', sender_full_name='A')
+		output = self.issue_command('rsvp ping we\'re all going to the yes concert')
+		self.assertEqual(None, self.event['limit'])
+		self.assertNotIn('is  attending!', output['body'])
+		self.assertNotIn('Tester', self.event['yes'])
+		self.assertNotIn('Tester', self.event['no'])
+		self.assertIn('@**A**', output['body'])
+		self.assertIn('we\'re all going to the yes concert', output['body'])
+	
+	def general_yes_with_no_prior_reservation(self, msg):
+		output = self.issue_command(msg)
+
+		self.assertEqual(None, self.event['limit'])
+		self.assertIn('is  attending!', output['body'])
+		self.assertIn('Tester', self.event['yes'])
+		self.assertNotIn('Tester', self.event['no'])
+
+	def test_rsvp_hell_yes(self):
+		self.general_yes_with_no_prior_reservation('rsvp hell yes')
+
+	def test_rsvp_yes_plz(self):
+		self.general_yes_with_no_prior_reservation('rsvp yes plz!')
 
 if __name__ == '__main__':
     unittest.main()
