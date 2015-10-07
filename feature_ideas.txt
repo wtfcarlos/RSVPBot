@@ -1,0 +1,8 @@
+Feature ideas
+---
+
+- Flexible yes/no commands
+
+- Private message the bot (for help)
+
+- Getting private messages (e.g. if you write a command that doesn't work like 'rsvp yes no')

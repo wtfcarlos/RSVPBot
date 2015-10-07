@@ -86,7 +86,6 @@ class RSVP(object):
         commands.RSVPInitCommand(),
         commands.RSVPHelpCommand(),
         commands.RSVPCancelCommand(),
-        commands.RSVPConfirmCommand(),
         commands.RSVPSetLimitCommand(),
         commands.RSVPSetDateCommand(),
         commands.RSVPSetTimeCommand(),
@@ -95,6 +94,10 @@ class RSVP(object):
         commands.RSVPSummaryCommand(),
         commands.RSVPPingCommand(),
         commands.RSVPCreditsCommand(),
+        
+
+        # This needs to be at last for fuzzy yes|no checking
+        commands.RSVPConfirmCommand()
       )
 
       for command in command_list:

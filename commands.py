@@ -144,7 +144,7 @@ class LimitReachedException(Exception):
   pass
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp (?P<decision>(yes|no))$'
+  regex = r'^rsvp .*\b(?P<decision>(yes|no))\b'
 
   opposite = {
     'yes': 'no',
@@ -182,13 +182,17 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
     body = ERROR_INTERNAL
 
+    # TODO: 
+    # if (this.yes_no_ambigous()):
+    #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
+
     try:
       event = self.attempt_confirm(event, sender_full_name, decision, limit)
 
       # Update the events dict with the new event.
       events.update(event)
       response_string = MSG_YES_NO_CONFIRMED % (sender_full_name, '' if decision == 'yes' else '**not**')
-
+      
       return RSVPCommandResponse(response_string, events)
 
     except LimitReachedException:
