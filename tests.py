@@ -286,6 +286,9 @@ class RSVPTest(unittest.TestCase):
     def test_rsvp_hell_yes(self):
         self.general_yes_with_no_prior_reservation('rsvp hell yes')
 
+    def test_rsvp_hell_yes_with_no(self):
+        self.general_yes_with_no_prior_reservation('rsvp hell to the yes I have no plans!')
+
     def test_rsvp_yes_plz(self):
         self.general_yes_with_no_prior_reservation('rsvp yes plz!')
 
@@ -293,13 +296,8 @@ class RSVPTest(unittest.TestCase):
         self.general_yes_with_no_prior_reservation('rsvp yes, after my nose job')
 
     def test_rsvp_yes_no(self):
-        output = self.issue_command('rsvp yes no')
+        self.general_yes_with_no_prior_reservation('rsvp yes no')
 
-        self.assertIn('That was confusing. RTFM.', output['body'])
-        self.assertNotIn('is  attending!', output['body'])
-        self.assertNotIn('is **not** attending!', output['body'])
-        self.assertNotIn('Tester', self.event['yes'])
-        self.assertNotIn('Tester', self.event['no'])
 
     def general_no_with_no_prior_reservation(self, msg):
         output = self.issue_command(msg)
@@ -345,6 +343,9 @@ class RSVPTest(unittest.TestCase):
         self.assertIn(self.event['description'], output['body'])
         self.assertNotIn('is  attending!', output['body'])
         self.assertNotIn('Tester', self.event['yes'])
+
+    def test_rsvp_yes_exclamation_no_plans(self):
+        self.general_yes_with_no_prior_reservation('rsvp yes! i couldn\'t say no')
 
 
 if __name__ == '__main__':

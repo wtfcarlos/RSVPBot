@@ -144,7 +144,7 @@ class LimitReachedException(Exception):
   pass
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp .*\b(?P<decision>(yes|no))\b'
+  regex = r'^rsvp .*?\b(?P<decision>(yes|no))\b'
 
   opposite = {
     'yes': 'no',
