@@ -144,7 +144,7 @@ class LimitReachedException(Exception):
   pass
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp (?P<decision>(yes|no))$'
+  regex = r'^rsvp .*?\b(?P<decision>(yes|no))\b'
 
   opposite = {
     'yes': 'no',
@@ -182,13 +182,17 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
     body = ERROR_INTERNAL
 
+    # TODO: 
+    # if (this.yes_no_ambigous()):
+    #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
+
     try:
       event = self.attempt_confirm(event, sender_full_name, decision, limit)
 
       # Update the events dict with the new event.
       events.update(event)
       response_string = MSG_YES_NO_CONFIRMED % (sender_full_name, '' if decision == 'yes' else '**not**')
-
+      
       return RSVPCommandResponse(response_string, events)
 
     except LimitReachedException:
@@ -303,7 +307,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
 
-    contributors = ["Mudit Ameta (SP2'15)"]
+    contributors = ["Mudit Ameta (SP2'15)", "Diego Berrocal (F2'15)", "Shad William Hopson (F1'15)", "Tom Murphy (F2'15)", "Miriam Shiffman (F2'15)", "Anjana Sofia Vakil (F2'15)"]
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
 
     body = "RSVPBot was created by @**Carlos Flores (SP2'15)**\nWith **contributions** from:\n"
