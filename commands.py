@@ -158,6 +158,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "Mudit Ameta (SP2'15)",
     "Tanoy Sinha (F1'14)",
     "Michelle Steigerwalt (SP1'15)",
+    "Steven McCarthy (SP2'15)",
   ]
 
   vip_yes_prefixes = [
