@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import re
 import datetime
+import random
 
 ERROR_INTERNAL                 = "We're having technical difficulties. Please try again later."
 ERROR_NOT_AN_EVENT             = "This thread is not an RSVPBot event!. Type `rsvp init` to make it into an event."
@@ -151,6 +152,27 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     'no': 'yes'
   }
 
+  vips = [
+    "James A. Keene (W1'14)",
+    "Cole Murphy (SP2'15)",
+    "Mudit Ameta (SP2'15)",
+    "Tanoy Sinha (F1'14)",
+    "Michelle Steigerwalt (SP1'15)"
+  ]
+
+  vip_yes_prefixes = [
+    "GET EXCITED!! ",
+    "AWWW YISS!! ",
+    "YASSSSS HENNY! ",
+    "OMG OMG OMG "
+  ]
+
+  vip_no_postfixes = [
+    " :confounded:",
+    " Bummer!",
+    " Oh no!!"
+  ]
+
   def confirm(self, event, sender_full_name, decision):
 
     # If they're on the opposite list, take them out.
@@ -182,6 +204,9 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
     body = ERROR_INTERNAL
 
+    vip_prefix = ''
+    vip_postfix = ''
+
     # TODO: 
     # if (this.yes_no_ambigous()):
     #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
@@ -189,10 +214,16 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     try:
       event = self.attempt_confirm(event, sender_full_name, decision, limit)
 
+      if sender_full_name in self.vips:
+        if decision == 'yes':
+          vip_prefix = random.choice(self.vip_yes_prefixes)
+        else:
+          vip_postfix = random.choice(self.vip_no_postfixes)
+
       # Update the events dict with the new event.
       events.update(event)
       response_string = MSG_YES_NO_CONFIRMED % (sender_full_name, '' if decision == 'yes' else '**not**')
-      
+      response_string = vip_prefix + response_string + vip_postfix
       return RSVPCommandResponse(response_string, events)
 
     except LimitReachedException:
