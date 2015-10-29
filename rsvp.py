@@ -65,7 +65,9 @@ class RSVP(object):
     """
     Processes the received message and returns a new message, to send back to the user.
     """
-    body = self.route(message)
+    body, message_type = self.route(message)
+    if message['type'] != 'private':
+        message['type'] = message_type
     return self.create_message_from_message(message, body)
 
   def route(self, message):
@@ -118,9 +120,9 @@ class RSVP(object):
 
           self.events = response.events
           self.commit_events()
-          return response.body
+          return response.body, response.message_type
 
-      return ERROR_INVALID_COMMAND % (content)
+      return ERROR_INVALID_COMMAND % (content), 'private'
 
 
   def create_message_from_message(self, message, body):
@@ -131,6 +133,8 @@ class RSVP(object):
       return {
         'subject': message['subject'],
         'display_recipient': message['display_recipient'],
+        'sender_email': message['sender_email'],
+        'type': message['type'],
         'body': body
       }
  
