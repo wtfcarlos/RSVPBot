@@ -25,12 +25,29 @@ MSG_YES_NO_CONFIRMED           = u'@**%s** is %s attending!'
 
 class RSVP(object):
 
-  def __init__(self, filename='events.json'):
+  def __init__(self, key_word, filename='events.json'):
     """
     When created, this instance will try to open self.filename. It will always
     keep a copy in memory of the whole events dictionary and commit it when necessary.
     """
+    self.key_word = key_word
     self.filename = filename
+    self.command_list = (
+      commands.RSVPInitCommand(key_word),
+      commands.RSVPHelpCommand(key_word),
+      commands.RSVPCancelCommand(key_word),
+      commands.RSVPSetLimitCommand(key_word),
+      commands.RSVPSetDateCommand(key_word),
+      commands.RSVPSetTimeCommand(key_word),
+      commands.RSVPSetTimeAllDayCommand(key_word),
+      commands.RSVPSetStringAttributeCommand(key_word),
+      commands.RSVPSummaryCommand(key_word),
+      commands.RSVPPingCommand(key_word),
+      commands.RSVPCreditsCommand(key_word),
+
+      # This needs to be at last for fuzzy yes|no checking
+      commands.RSVPConfirmCommand(key_word)
+    )
 
     try:
       with open(self.filename, "r") as f:
@@ -81,26 +98,8 @@ class RSVP(object):
 
     event_id = self.event_id(message)
 
-    if content.startswith('rsvp'):
-      command_list = (
-        commands.RSVPInitCommand(),
-        commands.RSVPHelpCommand(),
-        commands.RSVPCancelCommand(),
-        commands.RSVPSetLimitCommand(),
-        commands.RSVPSetDateCommand(),
-        commands.RSVPSetTimeCommand(),
-        commands.RSVPSetTimeAllDayCommand(),
-        commands.RSVPSetStringAttributeCommand(),
-        commands.RSVPSummaryCommand(),
-        commands.RSVPPingCommand(),
-        commands.RSVPCreditsCommand(),
-        
-
-        # This needs to be at last for fuzzy yes|no checking
-        commands.RSVPConfirmCommand()
-      )
-
-      for command in command_list:
+    if content.startswith(self.key_word):
+      for command in self.command_list:
         matches = command.match(content)
         if matches:
           kwargs = {
