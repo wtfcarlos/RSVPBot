@@ -122,7 +122,8 @@ class RSVP(object):
           self.commit_events()
           return response.body, response.message_type
 
-      return ERROR_INVALID_COMMAND % (content), 'private'
+      return ERROR_INVALID_COMMAND % (content), 'stream'
+    return None, 'private'
 
 
   def create_message_from_message(self, message, body):
