@@ -10,7 +10,7 @@ def testRSVP():
 class RSVPTest(unittest.TestCase):
 
     def setUp(self):
-        self.rsvp = rsvp.RSVP(filename='test.json')
+        self.rsvp = rsvp.RSVP('rsvp', filename='test.json')
         self.issue_command('rsvp init')
         self.event = self.get_test_event()
 

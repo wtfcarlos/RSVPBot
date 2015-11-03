@@ -41,8 +41,10 @@ Base class for an RSVPCommand
 class RSVPCommand(object):
   regex = None
 
-  def __init__(self, *args, **kwargs):
-    pass
+  def __init__(self, prefix, *args, **kwargs):
+    # prefix is the command start the bot listens to, typically 'rsvp'
+    self.prefix = r'^' + prefix + r' '
+    self.regex = self.prefix + self.regex
 
   def match(self, input_str):
     return re.match(self.regex, input_str, flags=re.DOTALL)
@@ -66,7 +68,7 @@ class RSVPEventNeededCommand(RSVPCommand):
 
 
 class RSVPInitCommand(RSVPCommand):
-  regex = r'^rsvp init$'
+  regex = r'init$'
 
   def run(self, events, *args, **kwargs):
     sender_id   = kwargs.pop('sender_id')
@@ -99,7 +101,7 @@ class RSVPInitCommand(RSVPCommand):
     return RSVPCommandResponse(body, events)
 
 class RSVPHelpCommand(RSVPCommand):
-  regex = r'^rsvp help$'
+  regex = r'help$'
 
   def run(self, events, *args, **kwargs):
     body = "**Command**|**Description**\n"
@@ -122,7 +124,7 @@ class RSVPHelpCommand(RSVPCommand):
 
 
 class RSVPCancelCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp cancel$'
+  regex = r'cancel$'
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
@@ -145,7 +147,7 @@ class LimitReachedException(Exception):
   pass
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp .*?\b(?P<decision>(yes|no))\b'
+  regex = r'.*?\b(?P<decision>(yes|no))\b'
 
   opposite = {
     'yes': 'no',
@@ -233,7 +235,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
 
 class RSVPSetLimitCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp set limit (?P<limit>\d+)$'
+  regex = r'set limit (?P<limit>\d+)$'
 
   def run(self, events, *args, **kwargs):
 
@@ -244,7 +246,7 @@ class RSVPSetLimitCommand(RSVPEventNeededCommand):
 
 
 class RSVPSetDateCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp set date (?P<month>\d{1,2})/(?P<day>\d{1,2})/(?P<year>\d{4})$'
+  regex = r'set date (?P<month>\d{1,2})/(?P<day>\d{1,2})/(?P<year>\d{4})$'
 
   def validate_future_date(self, day, month, year):
     today = datetime.date.today()
@@ -276,7 +278,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
 
 
 class RSVPSetTimeCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp set time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$'
+  regex = r'set time (?P<hours>\d{1,2})\:(?P<minutes>\d{1,2})$'
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
@@ -294,7 +296,7 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
     return RSVPCommandResponse(body, events)
 
 class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp set time allday$'
+  regex = r'set time allday$'
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
@@ -302,7 +304,7 @@ class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
     return RSVPCommandResponse(MSG_TIME_SET_ALLDAY, events)
 
 class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp set (?P<attribute>(place|description)) (?P<value>.+)$'
+  regex = r'set (?P<attribute>(place|description)) (?P<value>.+)$'
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
@@ -316,7 +318,10 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
 
 
 class RSVPPingCommand(RSVPEventNeededCommand):
-  regex = r'^(rsvp ping)$|(rsvp ping (?P<message>.+))$'
+  regex = r'^({key_word} ping)$|({key_word} ping (?P<message>.+))$'
+
+  def __init__(self, prefix, *args, **kwargs):
+    self.regex = self.regex.format(key_word=prefix)
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
@@ -335,7 +340,7 @@ class RSVPPingCommand(RSVPEventNeededCommand):
 
 
 class RSVPCreditsCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp credits$'
+  regex = r'credits$'
 
   def run(self, events, *args, **kwargs):
 
@@ -354,7 +359,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
     return RSVPCommandResponse(body, events)
 
 class RSVPSummaryCommand(RSVPEventNeededCommand):
-  regex = r'^rsvp summary$'
+  regex = r'summary$'
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
