@@ -205,7 +205,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     return self.confirm(event, sender_full_name, decision)
 
   def run(self, events, *args, **kwargs):
-    # event_id = kwargs.pop('event_id')
+    event_id = kwargs.pop('event_id')
     event = kwargs.pop('event')
     decision = kwargs.pop('decision')
     sender_full_name = kwargs.pop('sender_full_name')
@@ -231,7 +231,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
           vip_postfix = random.choice(self.vip_no_postfixes)
 
       # Update the events dict with the new event.
-      events.update(event)
+      events[event_id] = event
       response_string = self.responses.get(decision) % sender_full_name
       response_string = vip_prefix + response_string + vip_postfix
       return RSVPCommandResponse(response_string, events)
