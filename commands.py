@@ -66,7 +66,7 @@ class RSVPEventNeededCommand(RSVPCommand):
 
 
 class RSVPInitCommand(RSVPCommand):
-  regex = r'(init$)'
+  regex = r'init$'
 
   def run(self, events, *args, **kwargs):
     sender_id   = kwargs.pop('sender_id')
@@ -211,8 +211,6 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     sender_full_name = kwargs.pop('sender_full_name')
 
     limit = event['limit']
-
-    # body = ERROR_INTERNAL
 
     vip_prefix = ''
     vip_postfix = ''
@@ -389,7 +387,7 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
       limit_str
     )
 
-    confirmation_table = 'YES ({}) |NO ({}) |MAYBE({}) \n'
+    confirmation_table = 'YES ({}) |NO ({}) |MAYBE({}) \n:---:|:---:|:---:\n'
 
     confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']), len(event['maybe']))
 
