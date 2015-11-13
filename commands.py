@@ -47,7 +47,7 @@ class RSVPCommand(object):
     self.regex = self.prefix + self.regex
 
   def match(self, input_str):
-    return re.match(self.regex, input_str, flags=re.DOTALL)
+    return re.match(self.regex, input_str, flags=re.DOTALL|re.I)
 
   def execute(self, events, *args, **kwargs):
     """
@@ -200,7 +200,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     event = kwargs.pop('event')
-    decision = kwargs.pop('decision')
+    decision = kwargs.pop('decision').lower()
     sender_full_name = kwargs.pop('sender_full_name')
 
     limit = event['limit']
