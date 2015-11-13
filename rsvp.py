@@ -98,7 +98,9 @@ class RSVP(object):
 
     event_id = self.event_id(message)
 
-    if content.startswith(self.key_word):
+    regex = r'^{}'.format(self.key_word)
+
+    if re.match(regex, content, flags=re.I):
       for command in self.command_list:
         matches = command.match(content)
         if matches:
