@@ -347,6 +347,11 @@ class RSVPTest(unittest.TestCase):
     def test_rsvp_yes_exclamation_no_plans(self):
         self.general_yes_with_no_prior_reservation('rsvp yes! i couldn\'t say no')
 
+    def test_rsvp_NO(self):
+        self.general_no_with_no_prior_reservation('rsvp hell NO!')
+
+    def test_RSVP_yes_way(self):
+        self.general_yes_with_no_prior_reservation('RSVP yes plz')
 
 if __name__ == '__main__':
     unittest.main()
