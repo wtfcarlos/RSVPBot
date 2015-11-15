@@ -337,7 +337,7 @@ class RSVPPingCommand(RSVPEventNeededCommand):
       body += "@**%s** " % participant
 
     for participant in event['maybe']:
-      body += "@*%s* " % participant
+      body += "@**%s** " % participant
 
     if message:
       body += ('\n' + message)
