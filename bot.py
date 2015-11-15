@@ -55,7 +55,7 @@ class bot():
 
 
     def respond(self, message):
-        ''' Now we have an event dict, we should analize it completely.
+        ''' Now we have an event dict, we should analyze it completely.
         '''
         message = self.rsvp.process_message(message)
 
