@@ -20,13 +20,15 @@ class RSVPTest(unittest.TestCase):
         except OSError:
             pass
 
-    def create_input_message(self, content='', sender_full_name='Tester', subject='Testing', display_recipient='test-stream', sender_id='12345'):
+    def create_input_message(self, content='', sender_full_name='Tester', subject='Testing', display_recipient='test-stream', sender_id='12345', message_type='stream', sender_email='a@example.com'):
         return {
             'content': content,
             'subject': subject,
             'display_recipient': display_recipient,
             'sender_id': sender_id,
             'sender_full_name': sender_full_name,
+            'sender_email': sender_email,
+            'type': message_type,
         }
 
     def issue_command(self, command):
@@ -413,6 +415,16 @@ class RSVPTest(unittest.TestCase):
 
     def test_RSVP_yes_way(self):
         self.general_yes_with_no_prior_reservation('RSVP yes plz')
+
+    def test_rsvp_private_message(self):
+        output = self.issue_custom_command('rsvp yes', message_type='private')
+        self.assertEqual('private', output['type'])
+        self.assertEqual('a@example.com', output['sender_email'])
+
+    def test_rsvp_stream_message(self):
+        output = self.issue_custom_command('rsvp yes', message_type='stream')
+        self.assertEqual('stream', output['type'])
+        self.assertEqual('test-stream', output['display_recipient'])
 
 if __name__ == '__main__':
     unittest.main()

@@ -28,9 +28,10 @@ of this class.
 
 """
 class RSVPCommandResponse(object):
-  def __init__(self, body, events):
+  def __init__(self, body, events, message_type):
     self.body = body
     self.events = events
+    self.message_type = message_type
 
 
 """
@@ -62,7 +63,7 @@ class RSVPEventNeededCommand(RSVPCommand):
     event = kwargs.get('event')
     if event:
       return self.run(events, *args, **kwargs)
-    return RSVPCommandResponse(ERROR_NOT_AN_EVENT, events)
+    return RSVPCommandResponse(ERROR_NOT_AN_EVENT, events, 'stream')
 
 
 class RSVPInitCommand(RSVPCommand):
@@ -97,7 +98,7 @@ class RSVPInitCommand(RSVPCommand):
         }
       )
 
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 class RSVPHelpCommand(RSVPCommand):
   regex = r'help$'
@@ -119,7 +120,7 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n"
     body += "`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.\n"
 
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'private')
 
 
 class RSVPCancelCommand(RSVPEventNeededCommand):
@@ -140,7 +141,7 @@ class RSVPCancelCommand(RSVPEventNeededCommand):
     else:
       body = ERROR_NOT_AUTHORIZED_TO_DELETE
 
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 class LimitReachedException(Exception):
   pass
@@ -232,10 +233,10 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       events[event_id] = event
       response_string = self.responses.get(decision) % sender_full_name
       response_string = vip_prefix + response_string + vip_postfix
-      return RSVPCommandResponse(response_string, events)
+      return RSVPCommandResponse(response_string, events, 'stream')
 
     except LimitReachedException:
-      return RSVPCommandResponse(ERROR_LIMIT_REACHED, events)
+      return RSVPCommandResponse(ERROR_LIMIT_REACHED, events, 'stream')
 
 class RSVPSetLimitCommand(RSVPEventNeededCommand):
   regex = r'set limit (?P<limit>\d+)$'
@@ -245,7 +246,7 @@ class RSVPSetLimitCommand(RSVPEventNeededCommand):
     event = kwargs.pop('event')
     attendance_limit = int(kwargs.pop('limit'))
     event['limit'] = attendance_limit
-    return RSVPCommandResponse(MSG_ATTENDANCE_LIMIT_SET % (attendance_limit), events)
+    return RSVPCommandResponse(MSG_ATTENDANCE_LIMIT_SET % (attendance_limit), events, 'stream')
 
 
 class RSVPSetDateCommand(RSVPEventNeededCommand):
@@ -277,7 +278,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
     else:
       body = ERROR_DATE_NOT_VALID % (month, day, year)
 
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 
 class RSVPSetTimeCommand(RSVPEventNeededCommand):
@@ -296,7 +297,7 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
     else:
       body = ERROR_TIME_NOT_VALID % (hours, minutes)
       
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
   regex = r'set time allday$'
@@ -304,7 +305,7 @@ class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     events[event_id]['time'] = None
-    return RSVPCommandResponse(MSG_TIME_SET_ALLDAY, events)
+    return RSVPCommandResponse(MSG_TIME_SET_ALLDAY, events, 'stream')
 
 class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
   regex = r'set (?P<attribute>(place|description)) (?P<value>.+)$'
@@ -317,7 +318,7 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     events[event_id][attribute] = value
 
     body = MSG_STRING_ATTR_SET % (attribute, value)
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 
 class RSVPPingCommand(RSVPEventNeededCommand):
@@ -341,7 +342,7 @@ class RSVPPingCommand(RSVPEventNeededCommand):
     if message:
       body += ('\n' + message)
 
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 
 
@@ -364,7 +365,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
     body += "\nThe code for **RSVPBot** is available at https://github.com/kokeshii/RSVPBot"
 
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
 class RSVPSummaryCommand(RSVPEventNeededCommand):
   regex = r'(summary$|status$)'
@@ -403,5 +404,5 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
       confirmation_table += '\t|\t'
 
     body = summary_table + '\n\n' + confirmation_table
-    return RSVPCommandResponse(body, events)
+    return RSVPCommandResponse(body, events, 'stream')
 
