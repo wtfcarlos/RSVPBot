@@ -68,6 +68,8 @@ class RSVPTest(unittest.TestCase):
 
         # current stream is no longer an event
         self.assertNotIn('test-stream/Testing', self.rsvp.events)
+        self.assertEqual(2, len(output))
+
         self.assertIn("This event has been moved to [test-move/MovedTo]", output[0]['body'])
         self.assertIn("#narrow/stream/test-move/subject/MovedTo", output[0]['body'])
         self.assertIn("test-stream", output[0]['display_recipient'])
@@ -75,9 +77,20 @@ class RSVPTest(unittest.TestCase):
 
         # moved to IS now an event & was told so.
         self.assertIn('test-move/MovedTo', self.rsvp.events)
-        self.assertIn("I'm an RSVP event now", output[1]['body'])
+        self.assertIn("This thread is now an RSVPBot event! Type `rsvp help` for more options.", output[1]['body'])
         self.assertIn("test-move", output[1]['display_recipient'])
         self.assertIn("MovedTo", output[1]['subject'])
+
+    def test_move_to_already_existing_event(self):
+        self.issue_command('rsvp init')
+        output = self.issue_command('rsvp move http://testhost/#narrow/stream/test-stream/subject/Testing')
+
+        #attempted move to thread that's already an event (in this case, self)
+        self.assertEqual(1, len(output))
+        self.assertIn('test-stream/Testing', self.rsvp.events)
+        self.assertIn("Oops! `test-stream/Testing` is already an RSVPBot event", output[0]['body'])
+        self.assertIn("test-stream", output[0]['display_recipient'])
+        self.assertIn("Testing", output[0]['subject'])
 
     def test_rsvp_yes_with_no_prior_reservation(self):
         output = self.issue_command('rsvp yes')

@@ -181,36 +181,28 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
     sender_id = kwargs.pop('sender_id')
     event = kwargs.pop('event')
     destination = kwargs.pop('destination')
+    success_msg = None
 
     # Check if the issuer of this command is the event's original creator.
-    # Only he can delete the event.
+    # Only she can modify the event.
     creator = event['creator']
 
     # check and make sure a valid Zulip stream/topic URL is passed
     if not destination: 
       body = ERROR_MISSING_MOVE_DESTINATION
-      return RSVPCommandResponse(events, RSVPMessage('stream', body))
-      
     elif creator != sender_id:
       body = ERROR_NOT_AUTHORIZED_TO_DELETE
-      return RSVPCommandResponse(events, RSVPMessage('stream', body))
-
     else:
       # split URL into components
-
       stream, topic = util.narrow_url_to_stream_topic(destination)
 
       if stream is None or topic is None:
         body = ERROR_BAD_MOVE_DESTINATION % destination
-        return RSVPCommandResponse(events, RSVPMessage('stream', body))
-
       else:
         new_event_id = stream + "/" + topic
 
         if new_event_id in events:
           body = ERROR_MOVE_ALREADY_AN_EVENT % new_event_id
-          return RSVPCommandResponse(events, RSVPMessage('stream', body))
-
         else:
           body = MSG_EVENT_MOVED % (new_event_id, destination)
 
@@ -230,7 +222,9 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
             }
           )
 
-    return RSVPCommandResponse(events, RSVPMessage('stream', body), RSVPMessage('stream', MSG_INIT_SUCCESSFUL, stream, topic))
+          success_msg = RSVPMessage('stream', MSG_INIT_SUCCESSFUL, stream, topic)
+
+    return RSVPCommandResponse(events, RSVPMessage('stream', body), success_msg)
 
 class LimitReachedException(Exception):
   pass
