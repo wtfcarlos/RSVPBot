@@ -16,6 +16,8 @@ ERROR_INVALID_COMMAND          = "`rsvp set %s` is not a valid RSVPBot command! 
 ERROR_LIMIT_REACHED            = "Oh no! The **limit** for this event has been reached!"
 ERROR_MISSING_MOVE_DESTINATION = "`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting')"
 ERROR_BAD_MOVE_DESTINATION     = "`%s` is not a valid move destination URL!`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') Type `rsvp help` for the correct syntax."
+ERROR_MOVE_ALREADY_AN_EVENT    = "Oops! `%s` is already an RSVPBot event!"
+
 
 MSG_INIT_SUCCESSFUL            = 'This thread is now an RSVPBot event! Type `rsvp help` for more options.'
 MSG_DATE_SET                   = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
@@ -187,9 +189,11 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
     # check and make sure a valid Zulip stream/topic URL is passed
     if not destination: 
       body = ERROR_MISSING_MOVE_DESTINATION
-
+      return RSVPCommandResponse(events, RSVPMessage('stream', body))
+      
     elif creator != sender_id:
       body = ERROR_NOT_AUTHORIZED_TO_DELETE
+      return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
     else:
       # split URL into components
@@ -198,36 +202,35 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
 
       if stream is None or topic is None:
         body = ERROR_BAD_MOVE_DESTINATION % destination
+        return RSVPCommandResponse(events, RSVPMessage('stream', body))
+
       else:
         new_event_id = stream + "/" + topic
-        body = MSG_EVENT_MOVED % (new_event_id, destination)
 
-        old_event = events.pop(event_id)
+        if new_event_id in events:
+          body = ERROR_MOVE_ALREADY_AN_EVENT % new_event_id
+          return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
-        # need to make sure that there's no duplicate here!
-        # also, ideally we'd make sure the stream/topic existed & create it if not.
-        # AND send an 'init' notification to that new stream/toipic. Hm. what's the 
-        # best way to do that? Allow for a parameterized init? It's always a reply, not a push. 
-        # Can we return MULTIPLE messages instead of just one?
+        else:
+          body = MSG_EVENT_MOVED % (new_event_id, destination)
 
-        events.update(
-          { 
-            new_event_id: {
-              'name': topic,
-              'description': old_event['description'],
-              'place': old_event['place'],
-              'creator': old_event['creator'],
-              'yes': old_event['yes'],
-              'no': old_event['no'],
-              'maybe': old_event['maybe'],
-              'time': old_event['time'],
-              'limit': old_event['limit'],
-              'date': old_event['date'],
+          old_event = events.pop(event_id)
+
+          # need to make sure that there's no duplicate here!
+          # also, ideally we'd make sure the stream/topic existed & create it if not.
+          # AND send an 'init' notification to that new stream/toipic. Hm. what's the 
+          # best way to do that? Allow for a parameterized init? It's always a reply, not a push. 
+          # Can we return MULTIPLE messages instead of just one?
+
+          old_event.update({'name': topic})
+
+          events.update(
+            { 
+              new_event_id: old_event
             }
-          }
-        )
+          )
 
-    return RSVPCommandResponse(events, RSVPMessage('stream', body), RSVPMessage('stream', "I'm an RSVP event now", stream, topic))
+    return RSVPCommandResponse(events, RSVPMessage('stream', body), RSVPMessage('stream', MSG_INIT_SUCCESSFUL, stream, topic))
 
 class LimitReachedException(Exception):
   pass
