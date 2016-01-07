@@ -7,7 +7,6 @@ import os
 
 import rsvp
 
-
 class bot():
     ''' bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
         an optional caption or list of captions, and a list of the zulip streams it should be active in.
@@ -22,7 +21,6 @@ class bot():
         self.client = zulip.Client(zulip_username, zulip_api_key, site=zulip_site)
         self.subscriptions = self.subscribe_to_streams()
         self.rsvp = rsvp.RSVP(key_word)
-
 
     @property
     def streams(self):
@@ -57,15 +55,16 @@ class bot():
     def respond(self, message):
         ''' Now we have an event dict, we should analyze it completely.
         '''
-        message = self.rsvp.process_message(message)
 
-        if message:
-            self.send_message(message)
+        replies = self.rsvp.process_message(message)
+
+        for reply in replies:
+            if reply:
+                self.send_message(reply)
             
     def send_message(self, msg):
-        ''' Sends a message to zulip stream or user
+        ''' Sends a message to zulip stream or user 
         '''
-
         msg_to = msg['display_recipient']
         if msg['type'] == 'private':
             msg_to = msg['sender_email']
@@ -102,8 +101,8 @@ zulip_api_key = os.environ['ZULIP_RSVP_KEY']
 zulip_site = os.getenv('ZULIP_RSVP_SITE', None)
 key_word = 'rsvp'
 
-sandbox_stream =  os.getenv('ZULIP_RSVP_SANDBOX_STREAM', 'test-bot')
-subscribed_streams = [sandbox_stream]
+sandbox_stream =  os.getenv('ZULIP_RSVP_SANDBOX_STREAM', '')
+subscribed_streams = []
 
 new_bot = bot(zulip_username, zulip_api_key, key_word, subscribed_streams, zulip_site=zulip_site)
 new_bot.main()

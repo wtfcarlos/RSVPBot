@@ -27,6 +27,7 @@ class RSVP(object):
       commands.RSVPInitCommand(key_word),
       commands.RSVPHelpCommand(key_word),
       commands.RSVPCancelCommand(key_word),
+      commands.RSVPMoveCommand(key_word),
       commands.RSVPSetLimitCommand(key_word),
       commands.RSVPSetDateCommand(key_word),
       commands.RSVPSetTimeCommand(key_word),
@@ -74,10 +75,24 @@ class RSVP(object):
     """
     Processes the received message and returns a new message, to send back to the user.
     """
-    body, message_type = self.route(message)
-    if message['type'] != 'private':
-        message['type'] = message_type
-    return self.create_message_from_message(message, body)
+
+    # adding handling of mulitples, dammit.
+    replies = self.route(message)
+    messages = []
+
+    for idx, reply in enumerate(replies):
+      # only reply via PM to incoming PMs
+      if message['type'] == 'private':
+        reply.type = 'private'
+
+      if not reply.to:
+        # this uses invisible side effects and I don't care for it.
+        messages.append(self.create_message_from_message(message, reply.body))
+      else: 
+        # this is sending to a stream other than the one the incoming message
+        messages.append(self.format_message(reply))
+
+    return messages
 
   def route(self, message):
     """
@@ -111,12 +126,16 @@ class RSVP(object):
 
           response = command.execute(self.events, **kwargs)
 
+          # Allow for a single events object but multiple messaages to send
           self.events = response.events
           self.commit_events()
-          return response.body, response.message_type
 
-      return ERROR_INVALID_COMMAND % (content), 'stream'
-    return None, 'private'
+          # if it has multiple messages to send, then return that instead of 
+          # the pair
+          return response.messages
+
+      return [commands.RSVPMessage('stream', ERROR_INVALID_COMMAND % (content))]
+    return [commands.RSVPMessage('private', None)]
 
 
   def create_message_from_message(self, message, body):
@@ -131,7 +150,18 @@ class RSVP(object):
         'type': message['type'],
         'body': body
       }
- 
+
+
+  def format_message(self, message):
+    """
+    Convenience method for creating a zulip response message from an RSVP message.
+    """
+    return {
+      'subject': message.subject,
+      'display_recipient': message.to,
+      'type': message.type,
+      'body': message.body
+    }
 
   def event_id(self, message):
     """
@@ -140,6 +170,15 @@ class RSVP(object):
     and the message's subject (aka the thread's title.)
     """
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
+
+
+  def event_id_from_subject_url(self, message):
+    """
+    An event's identifier is the concatenation of the 'display_recipient'
+    (zulip slang for the stream's name)
+    and the message's subject (aka the thread's title.)
+    """
+    return u'{}/{}'.format(message['display_recipient'], message['subject'])    
 
   def normalize_whitespace(self, content):
     # Strips trailing and leading whitespace, and normalizes contiguous
