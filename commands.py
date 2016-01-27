@@ -14,7 +14,7 @@ ERROR_TIME_NOT_VALID           = "Oops! **%02d:%02d** is not a valid time!"
 ERROR_DATE_NOT_VALID           = "Oops! **%02d/%02d/%04d** is not a valid date in the **future**!"
 ERROR_INVALID_COMMAND          = "`rsvp set %s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
 ERROR_LIMIT_REACHED            = "Oh no! The **limit** for this event has been reached!"
-ERROR_MISSING_MOVE_DESTINATION = "`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting')"
+ERROR_MISSING_MOVE_DESTINATION = "`rsvp move` requires a Zulip stream URL desotination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting')"
 ERROR_BAD_MOVE_DESTINATION     = "`%s` is not a valid move destination URL!`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') Type `rsvp help` for the correct syntax."
 ERROR_MOVE_ALREADY_AN_EVENT    = "Oops! `%s` is already an RSVPBot event!"
 
@@ -161,7 +161,7 @@ class RSVPCancelCommand(RSVPEventNeededCommand):
     event = kwargs.pop('event')
 
     # Check if the issuer of this command is the event's original creator.
-    # Only he can delete the event.
+    # Only they can delete the event.
     creator = event['creator']
 
     if creator == sender_id:
