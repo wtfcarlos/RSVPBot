@@ -6,13 +6,11 @@ import urlparse
 import urllib
 import util
 
-ERROR_INTERNAL                 = "We're having technical difficulties. Please try again later."
 ERROR_NOT_AN_EVENT             = "This thread is not an RSVPBot event!. Type `rsvp init` to make it into an event."
 ERROR_NOT_AUTHORIZED_TO_DELETE = "Oops! You cannot cancel this event! Only the event's original creator can do so."
 ERROR_ALREADY_AN_EVENT         = "Oops! This thread is already an RSVPBot event!"
 ERROR_TIME_NOT_VALID           = "Oops! **%02d:%02d** is not a valid time!"
 ERROR_DATE_NOT_VALID           = "Oops! **%02d/%02d/%04d** is not a valid date in the **future**!"
-ERROR_INVALID_COMMAND          = "`rsvp set %s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
 ERROR_LIMIT_REACHED            = "Oh no! The **limit** for this event has been reached!"
 ERROR_MISSING_MOVE_DESTINATION = "`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting')"
 ERROR_BAD_MOVE_DESTINATION     = "`%s` is not a valid move destination URL!`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') Type `rsvp help` for the correct syntax."
