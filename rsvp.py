@@ -5,9 +5,8 @@ import time
 import datetime
 
 import commands
+from strings import *
 
-ERROR_INVALID_COMMAND          = "`%s` is not a valid RSVPBot command! Type `rsvp help` for the correct syntax."
-  
 class RSVP(object):
 
   def __init__(self, key_word, filename='events.json'):
