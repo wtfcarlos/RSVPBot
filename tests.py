@@ -202,7 +202,7 @@ class RSVPTest(unittest.TestCase):
             self.event['date']
         )
 
-    def test_set_date(self):
+    def test_set_past_date(self):
         output = self.issue_command('rsvp set date 02/25/1000')
 
         self.assertIn(
