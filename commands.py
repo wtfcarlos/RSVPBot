@@ -451,9 +451,19 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
 
-    contributors = ["Mudit Ameta (SP2'15)", "Diego Berrocal (F2'15)", "Shad William Hopson (F1'15)", 
-    "Tom Murphy (F2'15)", "Miriam Shiffman (F2'15)", "Anjana Sofia Vakil (F2'15)",
-    "Steven McCarthy (SP2'15)","Kara McNair (F2'15)"]
+    contributors = [
+      "Mudit Ameta (SP2'15)",
+      "Diego Berrocal (F2'15)",
+      "Shad William Hopson (F1'15)",
+      "Tom Murphy (F2'15)",
+      "Miriam Shiffman (F2'15)",
+      "Anjana Sofia Vakil (F2'15)",
+      "Steven McCarthy (SP2'15)",
+      "Kara McNair (F2'15)",
+      "Pris Nasrat (SP2'16)",
+      "Benjamin Gilbert (F2'15)",
+      "Andrew Drozdov (SP1'15)",
+    ]
 
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
 
