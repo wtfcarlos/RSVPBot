@@ -259,6 +259,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "David Gomez Urquiza (W2'15)",
     "Andrew Drozdov (SP1'15)",
     "Andrew Desharnais (SP1'16)",
+    "Nancy Thomas",
   ]
 
   vip_yes_prefixes = [
