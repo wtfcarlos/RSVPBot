@@ -453,12 +453,13 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
     contributors = ["Mudit Ameta (SP2'15)", "Diego Berrocal (F2'15)", "Shad William Hopson (F1'15)", 
     "Tom Murphy (F2'15)", "Miriam Shiffman (F2'15)", "Anjana Sofia Vakil (F2'15)",
-    "Steven McCarthy (SP2'15)]","Kara McNair (F2'15)"]
+    "Steven McCarthy (SP2'15)","Kara McNair (F2'15)"]
+
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
 
     body = "RSVPBot was created by @**Carlos Rey (SP2'15)**\nWith **contributions** from:\n"
 
-    body += ', '.join(contributors)
+    body += '\n '.join(contributors)
 
     body += "\n and invaluable test feedback from:\n"
     body += ', '.join(testers)
