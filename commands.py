@@ -457,14 +457,14 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
 
-    body = "RSVPBot was created by @**Carlos Rey (SP2'15)**\nWith **contributions** from:\n"
+    body = "The RSVPBot was created by @**Carlos Rey (SP2'15)**\nWith **contributions** from:\n\n"
 
     body += '\n '.join(contributors)
 
-    body += "\n and invaluable test feedback from:\n"
-    body += ', '.join(testers)
+    body += "\n\n and invaluable test feedback from:\n\n"
+    body += '\n '.join(testers)
 
-    body += "\nThe code for **RSVPBot** is available at https://github.com/kokeshii/RSVPBot"
+    body += "\n\nThe code for **RSVPBot** is available at https://github.com/kokeshii/RSVPBot"
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
