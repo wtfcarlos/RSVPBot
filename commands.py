@@ -261,6 +261,25 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "Andrew Drozdov (SP1'15)",
     "Andrew Desharnais (SP1'16)",
     "Nancy Thomas",
+    "Nikki Bee (SP1'15)",
+    "Ahmed Abdalla (SP2'15)",
+    "Leah Steinberg (F2'15)",
+    "Dan Luu (W'13)",
+    "Julia Evans (F'13)",
+    "Liene Verzemnieks (S2'15)",
+    "Lindsey Jacks (F1'15)",
+    "Margo Smith (F2'14)",
+    "Mark Dominus",
+    "Nat Welch (SP2'15)",
+    "Nicholas Cassleman (F2'14)",
+    "Samantha Goldstein (S1'15)",
+    "Robert Malko (SP1'15)",
+    "Dazhong John Xia (F1'15)",
+    "Carlos Sánchez Serrano (S'14)",
+    "Serena Peruzzo (SP1'15)",
+    "Shad William Hopson (F1'15)",
+    "Serban Porumbescu (SP1'15)",
+    "Matthias Elliott (F2'15)",
   ]
 
   vip_yes_prefixes = [
@@ -270,6 +289,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "OMG OMG OMG ",
     "HYPE HYPE HYPE HYPE HYPE ",
     "WOW THIS IS AWESOME: ",
+    "YEAAAAAAHHH!!!! :tada: ",
   ]
 
   vip_no_postfixes = [
