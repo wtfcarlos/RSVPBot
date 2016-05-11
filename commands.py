@@ -225,19 +225,55 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "Tanoy Sinha (F1'14)",
     "Michelle Steigerwalt (SP1'15)",
     "Steven McCarthy (SP2'15)",
+    "Chen Lin (W'14)",
+    "Gonçalo Morais (SP1'15)",
+    "David Albert",
+    "Jesse Chen (SP2'15)",
+    "Tim Sell (S1'15)",
+    "Nicole Lehrer (S1'15)",
+    "Agustín Benassi (SP1'15)",
+    "Rachel Vincent",
+    "Alex Takata (F1'15)",
+    "Anjana Sofia Vakil (F2'15)",
+    "Decky Coss (W'14)",
+    "Pam Selle (SP1'15)",
+    "Jamal Carvalho (S2'15)",
+    "Sonali Sridhar",
+    "Veronica Hanus (F2'15)",
+    "Nick Bergson-Shilcock",
+    "Luna Lunapiena (SP2'15)",
+    "Benjamin Gilbert (F2'15)",
+    "Barak Chamo (F1'15)",
+    "Bradley Boccuzzi (S1'15)",
+    "Diego Berrocal (F2'15)",
+    "Eric Hambro (SP1'15)",
+    "Ezekiel Benjamin Smithburg (F2'15)",
+    "Giorgio Leveroni (S'14)",
+    "Harry Truong (F2'15)",
+    "John Hergenroeder (SP2'15)",
+    "Kamal Marhubi (S1'15)",
+    "Ken Pratt (SP2'15)",
+    "Keyan Pishdadian (W2'15)",
+    "Carlos Rey (SP2'15)",
+    "Miriam Shiffman (F2'15)",
+    "David Gomez Urquiza (W2'15)",
+    "Andrew Drozdov (SP1'15)",
+    "Andrew Desharnais (SP1'16)",
   ]
 
   vip_yes_prefixes = [
     "GET EXCITED!! ",
     "AWWW YISS!! ",
     "YASSSSS HENNY! ",
-    "OMG OMG OMG "
+    "OMG OMG OMG ",
+    "HYPE HYPE HYPE HYPE HYPE ",
+    "WOW THIS IS AWESOME: ",
   ]
 
   vip_no_postfixes = [
     " :confounded:",
     " Bummer!",
-    " Oh no!!"
+    " Oh no!!",
   ]
 
   def confirm(self, event, sender_full_name, decision):
@@ -418,7 +454,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
     "Steven McCarthy (SP2'15)]","Kara McNair (F2'15)"]
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
 
-    body = "RSVPBot was created by @**Carlos Flores (SP2'15)**\nWith **contributions** from:\n"
+    body = "RSVPBot was created by @**Carlos Rey (SP2'15)**\nWith **contributions** from:\n"
 
     body += ', '.join(contributors)
 
