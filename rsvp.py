@@ -89,15 +89,24 @@ class RSVP(object):
 
   def route(self, message):
     """
+    Split multiple line message and collate the responses.
+    """
+
+    content = message['content']
+    responses = []
+    lines = self.normalize_whitespace(content)
+    for line in lines:
+      responses.extend(self.route_internal(message, line))
+    return responses
+
+  def route_internal(self, message, content):
+    """
     To be a valid rsvp command, the string must start with the string rsvp.
     To ensure that we can match things exactly, we must remove the extra whitespace.
     We then pattern-match it with every known command pattern.
     If there's absolutely no match, we return None, which, for the purposes of this program,
     means no reply.
     """
-    content = message['content']
-    content = self.normalize_whitespace(content)
-
     event_id = self.event_id(message)
 
     regex = r'^{}'.format(self.key_word)
@@ -176,6 +185,7 @@ class RSVP(object):
   def normalize_whitespace(self, content):
     # Strips trailing and leading whitespace, and normalizes contiguous
     # Whitespace with a single space.
-    content = content.strip()
-    content = re.sub(r'\s+', ' ', content)
-    return content
+    lines = []
+    for line in content.strip().split('\n'):
+     lines.append(re.sub(r'\s+', ' ', line))
+    return lines
