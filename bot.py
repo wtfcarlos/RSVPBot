@@ -1,7 +1,8 @@
 #! /usr/local/bin/python
+import os
+
 import zulip
 import requests
-import os
 
 import rsvp
 
@@ -11,12 +12,12 @@ class Bot():
         an optional caption or list of captions, and a list of the zulip streams it should be active in.
         it then posts a caption and a randomly selected gif in response to zulip messages.
      """
-    def __init__(self, zulip_username, zulip_api_key, key_word, subscribed_streams=[], zulip_site=None):
+    def __init__(self, zulip_username, zulip_api_key, key_word, subscribed_streams=None, zulip_site=None):
         self.username = zulip_username
         self.api_key = zulip_api_key
         self.site = zulip_site
         self.key_word = key_word.lower()
-        self.subscribed_streams = subscribed_streams
+        self.subscribed_streams = subscribed_streams or []
         self.client = zulip.Client(zulip_username, zulip_api_key, site=zulip_site)
         self.client._register('get_users', method='GET', url='users')
         self.subscriptions = self.subscribe_to_streams()
@@ -86,13 +87,17 @@ class Bot():
 
 """
 if __name__ == "__main__":
-  zulip_username = os.environ['ZULIP_RSVP_EMAIL']
-  zulip_api_key = os.environ['ZULIP_RSVP_KEY']
-  zulip_site = os.getenv('ZULIP_RSVP_SITE', None)
-  key_word = 'rsvp'
-
-  sandbox_stream = os.getenv('ZULIP_RSVP_SANDBOX_STREAM', '')
-  subscribed_streams = []
-
-  new_bot = Bot(zulip_username, zulip_api_key, key_word, subscribed_streams, zulip_site=zulip_site)
-  new_bot.main()
+    ZULIP_USERNAME = os.environ['ZULIP_RSVP_EMAIL']
+    ZULIP_API_KEY = os.environ['ZULIP_RSVP_KEY']
+    ZULIP_SITE = os.getenv('ZULIP_RSVP_SITE', None)
+    KEY_WORD = os.getenv('ZULIP_KEY_WORD', 'rsvp')
+    SANDBOX_STREAM = os.getenv('ZULIP_RSVP_SANDBOX_STREAM', None)
+    SUBSCRIBED_STREAMS = []
+    new_bot = Bot(
+        ZULIP_USERNAME,
+        ZULIP_API_KEY,
+        KEY_WORD,
+        SUBSCRIBED_STREAMS,
+        ZULIP_SITE,
+    )
+    new_bot.main()

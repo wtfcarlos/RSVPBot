@@ -4,6 +4,9 @@ import re
 import datetime
 import random
 
+from pytimeparse.timeparse import timeparse
+
+import calendar_events
 import strings
 import util
 
@@ -49,7 +52,7 @@ class RSVPCommand(object):
     self.regex = self.prefix + self.regex
 
   def match(self, input_str):
-    return re.match(self.regex, input_str, flags=re.DOTALL|re.I)
+    return re.match(self.regex, input_str, flags=re.DOTALL | re.I)
 
   def execute(self, events, *args, **kwargs):
     """execute() is just a convenience wrapper around __run()."""
@@ -93,12 +96,52 @@ class RSVPInitCommand(RSVPCommand):
             'time': None,
             'limit': None,
             'date': '%s' % datetime.date.today(),
+            'calendar_event': None,
+            'duration': None,
           }
         }
       )
 
     response = RSVPCommandResponse(events, RSVPMessage('stream', body))
     return response
+
+
+class RSVPSetDurationCommand(RSVPEventNeededCommand):
+  regex = r'set duration (?P<duration>.+)$'
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+    duration = kwargs.pop('duration')
+
+    parsed_duration_in_seconds = timeparse(duration, granularity='minutes')
+    event['duration'] = parsed_duration_in_seconds
+    body = 'Duration set to %s' % datetime.timedelta(seconds=parsed_duration_in_seconds)
+
+    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+
+
+class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
+  regex = r'add to calendar$'
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+    try:
+      cal_event = calendar_events.add_rsvpbot_event_to_gcal(event)
+    except calendar_events.KeyfilePathNotSpecifiedError:
+      body = 'Oops! Adding to Calendar not currently supported.'
+    except calendar_events.DateAndTimeNotSuppliedError:
+      body = 'Oops! The `date` and `time` are required to add this to the calendar!'
+    except calendar_events.DurationNotSuppliedError:
+      body = 'Oops! The event `duration` is required to add this to the calendar!'
+    else:
+      event['calendar_event'] = {}
+      event['calendar_event']['id'] = cal_event.get('id')
+      event['calendar_event']['html_link'] = cal_event.get('htmlLink')
+      body = 'Event [added to {calendar_name} Calendar]({url})!'.format(
+          calendar_name=cal_event.get('calendar_name'),
+          url=cal_event.get('htmlLink'))
+
+    return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
 
 class RSVPHelpCommand(RSVPCommand):
@@ -114,6 +157,8 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.\n"
     body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
     body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
+    body += "`rsvp set duration HH:mm or eg. 30m`|Sets the length of time this event will last (optional, only for adding the event to 455 Broadway Calendar).\n"
+    body += "`rsvp add to calendar`|Creates an event on the 455 Broadway Calendar. Requires time, date, and duration to be set first.\n"
     body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
     body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
     body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
@@ -308,6 +353,9 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       # else, remove all instances of them from other response lists.
       elif sender_email in event[response]:
         event[response] = [value for value in event[response] if value != sender_email]
+      calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+      if calendar_event_id:
+        calendar_events.update_gcal_event(event)
 
     return event
 
@@ -392,6 +440,9 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
       event['date'] = str(datetime.date(year, month, day))
       events[event_id] = event
       body = strings.MSG_DATE_SET % (month, day, year)
+      calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+      if calendar_event_id:
+        calendar_events.update_gcal_event(event)
     else:
       body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
 
@@ -406,8 +457,12 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
     hours, minutes = int(kwargs.pop('hours')), int(kwargs.pop('minutes'))
 
     if hours in range(0, 24) and minutes in range(0, 60):
-      events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
+      event = events[event_id]
+      event['time'] = '%02d:%02d' % (hours, minutes)
       body = strings.MSG_TIME_SET % (hours, minutes)
+      calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+      if calendar_event_id:
+        calendar_events.update_gcal_event(event)
     else:
       body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
 
@@ -431,7 +486,11 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     attribute = kwargs.pop('attribute')
     value = kwargs.pop('value')
 
-    events[event_id][attribute] = value
+    event = events[event_id]
+    event[attribute] = value
+    calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+    if calendar_event_id:
+      calendar_events.update_gcal_event(event)
 
     body = strings.MSG_STRING_ATTR_SET % (attribute, value)
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
@@ -499,6 +558,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
       "Pris Nasrat (SP2'16)",
       "Benjamin Gilbert (F2'15)",
       "Andrew Drozdov (SP1'15)",
+      "Alex Wilson (S1'16)",
     ]
 
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]

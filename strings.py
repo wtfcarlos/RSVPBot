@@ -17,3 +17,4 @@ ERROR_LIMIT_REACHED            = "Oh no! The **limit** for this event has been r
 ERROR_MISSING_MOVE_DESTINATION = "`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting')"
 ERROR_BAD_MOVE_DESTINATION     = "`%s` is not a valid move destination URL!`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') Type `rsvp help` for the correct syntax."
 ERROR_MOVE_ALREADY_AN_EVENT    = "Oops! `%s` is already an RSVPBot event!"
+MISSING_CALENDAR_EVENT_PARAMETER = "Oops! Please make sure date, time, duration, and location exist before creating a calendar event."

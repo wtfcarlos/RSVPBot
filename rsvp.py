@@ -28,6 +28,8 @@ class RSVP(object):
       rsvp_commands.RSVPSummaryCommand(key_word),
       rsvp_commands.RSVPPingCommand(key_word),
       rsvp_commands.RSVPCreditsCommand(key_word),
+      rsvp_commands.RSVPCreateCalendarEventCommand(key_word),
+      rsvp_commands.RSVPSetDurationCommand(key_word),
 
       # This needs to be at last for fuzzy yes|no checking
       rsvp_commands.RSVPConfirmCommand(key_word)
@@ -55,7 +57,6 @@ class RSVP(object):
   def get_this_event(self, message):
     """Returns the event relevant to this Zulip thread."""
     event_id = self.event_id(message)
-
     return self.events.get(event_id)
 
   def process_message(self, message):
