@@ -7,14 +7,13 @@ import random
 import strings
 import util
 
-"""
 
-Class that represents a response from an RSVPCommand.
-Every call to an RSVPCommand instance's execute() method is expected to return an instance
-of this class.
-
-"""
 class RSVPMessage(object):
+  """
+  Class that represents a response from an RSVPCommand.
+  Every call to an RSVPCommand instance's execute() method is expected to return an instance
+  of this class.
+  """
   def __init__(self, msg_type, body, to=None, subject=None):
     self.type = msg_type
     self.body = body
@@ -39,10 +38,11 @@ class RSVPCommandResponse(object):
       if isinstance(arg, RSVPMessage):
         self.messages.append(arg)
 
-"""
-Base class for an RSVPCommand
-"""
+
 class RSVPCommand(object):
+  """
+  Base class for an RSVPCommand
+  """
   regex = None
 
   def __init__(self, prefix, *args, **kwargs):
@@ -59,11 +59,11 @@ class RSVPCommand(object):
     """
     return self.run(events, *args, **kwargs)
 
-"""
-Base class for a command where an event needs to exist prior to execution
-"""
-class RSVPEventNeededCommand(RSVPCommand):
 
+class RSVPEventNeededCommand(RSVPCommand):
+  """
+  Base class for a command where an event needs to exist prior to execution
+  """
   def execute(self, events, *args, **kwargs):
     event = kwargs.get('event')
     if event:
@@ -106,9 +106,9 @@ class RSVPInitCommand(RSVPCommand):
     response = RSVPCommandResponse(events, RSVPMessage('stream', body))
     return response
 
+
 class RSVPHelpCommand(RSVPCommand):
   regex = r'help$'
-
 
   def run(self, events, *args, **kwargs):
     body = "**Command**|**Description**\n"
@@ -501,6 +501,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
+
 class RSVPSummaryCommand(RSVPEventNeededCommand):
   regex = r'(summary$|status$)'
 
@@ -539,4 +540,3 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     body = summary_table + '\n\n' + confirmation_table
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
-
