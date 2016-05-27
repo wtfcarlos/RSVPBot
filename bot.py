@@ -1,8 +1,6 @@
 #! /usr/local/bin/python
 import zulip
-import json
 import requests
-import random
 import os
 
 import rsvp

@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 import re
 import datetime
 import random
-import urlparse
-import urllib
 
 from strings import *
 import util

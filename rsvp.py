@@ -1,8 +1,6 @@
 from __future__ import with_statement
 import re
 import json
-import time
-import datetime
 
 import commands
 from strings import *
