@@ -26,7 +26,7 @@ class RSVPMessage(object):
   def __str__(self):
     attr_string = ""
     for key in dir(self):
-      attr_string += key + ":" + str(getattr(self,key)) + ", "
+      attr_string += key + ":" + str(getattr(self, key)) + ", "
     return attr_string
 
 
@@ -189,14 +189,14 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
 
           # need to make sure that there's no duplicate here!
           # also, ideally we'd make sure the stream/topic existed & create it if not.
-          # AND send an 'init' notification to that new stream/toipic. Hm. what's the 
-          # best way to do that? Allow for a parameterized init? It's always a reply, not a push. 
+          # AND send an 'init' notification to that new stream/toipic. Hm. what's the
+          # best way to do that? Allow for a parameterized init? It's always a reply, not a push.
           # Can we return MULTIPLE messages instead of just one?
 
           old_event.update({'name': topic})
 
           events.update(
-            { 
+            {
               new_event_id: old_event
             }
           )
@@ -299,7 +299,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
   ]
 
   def confirm(self, event, sender_full_name, decision):
-    # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after 
+    # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
     # all currently logged events have passed.
     if ('maybe' not in event.keys()):
       event['maybe'] = [];
@@ -307,7 +307,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     # If they're in a different response list, take them out of it.
     for response in self.responses.keys():
       # prevent duplicates if replying multiple times
-      if (response == decision): 
+      if (response == decision):
         # if they're already in that list, nothing to do
         if (sender_full_name not in event[response]):
           event[response].append(sender_full_name)
@@ -337,7 +337,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     vip_prefix = ''
     vip_postfix = ''
 
-    # TODO: 
+    # TODO:
     # if (this.yes_no_ambigous()):
     #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
 

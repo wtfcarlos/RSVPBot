@@ -5,6 +5,7 @@ import os
 
 import rsvp
 
+
 class bot():
     ''' bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
         an optional caption or list of captions, and a list of the zulip streams it should be active in.
@@ -27,10 +28,9 @@ class bot():
         if not self.subscribed_streams:
             streams = [{'name': stream['name']} for stream in self.get_all_zulip_streams()]
             return streams
-        else: 
+        else:
             streams = [{'name': stream} for stream in self.subscribed_streams]
             return streams
-
 
     def get_all_zulip_streams(self):
         ''' Call Zulip API to get a list of all streams
@@ -43,12 +43,10 @@ class bot():
         else:
             raise RuntimeError(':( we failed to GET streams.\n(%s)' % response)
 
-
     def subscribe_to_streams(self):
         ''' Subscribes to zulip streams
         '''
         self.client.add_subscriptions(self.streams)
-
 
     def respond(self, message):
         ''' Now we have an event dict, we should analyze it completely.
@@ -59,9 +57,9 @@ class bot():
         for reply in replies:
             if reply:
                 self.send_message(reply)
-            
+
     def send_message(self, msg):
-        ''' Sends a message to zulip stream or user 
+        ''' Sends a message to zulip stream or user
         '''
         msg_to = msg['display_recipient']
         if msg['type'] == 'private':
@@ -74,7 +72,6 @@ class bot():
             "content": msg['body']
         })
 
-
     def main(self):
         ''' Blocking call that runs forever. Calls self.respond() on every event received.
         '''
@@ -82,14 +79,14 @@ class bot():
 
 
 ''' The Customization Part!
-    
+
     Create a zulip bot under "settings" on zulip.
     Zulip will give you a username and API key
-    key_word is the text in Zulip you would like the bot to respond to. This may be a 
+    key_word is the text in Zulip you would like the bot to respond to. This may be a
         single word or a phrase.
     search_string is what you want the bot to search giphy for.
     caption may be one of: [] OR 'a single string' OR ['or a list', 'of strings']
-    subscribed_streams is a list of the streams the bot should be active on. An empty 
+    subscribed_streams is a list of the streams the bot should be active on. An empty
         list defaults to ALL zulip streams
 
 '''
@@ -99,7 +96,7 @@ zulip_api_key = os.environ['ZULIP_RSVP_KEY']
 zulip_site = os.getenv('ZULIP_RSVP_SITE', None)
 key_word = 'rsvp'
 
-sandbox_stream =  os.getenv('ZULIP_RSVP_SANDBOX_STREAM', '')
+sandbox_stream = os.getenv('ZULIP_RSVP_SANDBOX_STREAM', '')
 subscribed_streams = []
 
 new_bot = bot(zulip_username, zulip_api_key, key_word, subscribed_streams, zulip_site=zulip_site)

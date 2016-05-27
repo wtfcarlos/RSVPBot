@@ -60,7 +60,7 @@ class RSVP(object):
     Returns the event relevant to this Zulip thread
     """
     event_id = self.event_id(message)
-    
+
     return self.events.get(event_id)
 
   def process_message(self, message):
@@ -80,7 +80,7 @@ class RSVP(object):
       if not reply.to:
         # this uses invisible side effects and I don't care for it.
         messages.append(self.create_message_from_message(message, reply.body))
-      else: 
+      else:
         # this is sending to a stream other than the one the incoming message
         messages.append(self.format_message(reply))
 
@@ -131,7 +131,7 @@ class RSVP(object):
           self.events = response.events
           self.commit_events()
 
-          # if it has multiple messages to send, then return that instead of 
+          # if it has multiple messages to send, then return that instead of
           # the pair
           return response.messages
 
@@ -179,7 +179,7 @@ class RSVP(object):
     (zulip slang for the stream's name)
     and the message's subject (aka the thread's title.)
     """
-    return u'{}/{}'.format(message['display_recipient'], message['subject'])    
+    return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
   def normalize_whitespace(self, content):
     # Strips trailing and leading whitespace, and normalizes contiguous
