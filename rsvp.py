@@ -80,7 +80,6 @@ class RSVP(object):
 
   def route(self, message):
     """Split multiple line message and collate the responses."""
-
     content = message['content']
     responses = []
     lines = self.normalize_whitespace(content)
