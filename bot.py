@@ -69,7 +69,7 @@ class Bot():
 
     def main(self):
         """Blocking call that runs forever. Calls self.respond() on every event received."""
-        self.client.call_on_each_message(lambda msg: self.respond(msg))
+        self.client.call_on_each_message(self.respond)
 
 
 """ The Customization Part!
