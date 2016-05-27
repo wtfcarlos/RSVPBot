@@ -43,30 +43,22 @@ class RSVP(object):
       self.events = {}
 
   def commit_events(self):
-    """
-    Write the whole events dictionary to the filename file.
-    """
+    """Write the whole events dictionary to the filename file."""
     with open(self.filename, 'w+') as f:
       json.dump(self.events, f)
 
   def __exit__(self, type, value, traceback):
-    """
-    Before the program terminates, commit events.
-    """
+    """Before the program terminates, commit events."""
     self.commit_events()
 
   def get_this_event(self, message):
-    """
-    Returns the event relevant to this Zulip thread
-    """
+    """Returns the event relevant to this Zulip thread."""
     event_id = self.event_id(message)
 
     return self.events.get(event_id)
 
   def process_message(self, message):
-    """
-    Processes the received message and returns a new message, to send back to the user.
-    """
+    """Processes the received message and returns a new message, to send back to the user."""
 
     # adding handling of mulitples, dammit.
     replies = self.route(message)
@@ -87,9 +79,7 @@ class RSVP(object):
     return messages
 
   def route(self, message):
-    """
-    Split multiple line message and collate the responses.
-    """
+    """Split multiple line message and collate the responses."""
 
     content = message['content']
     responses = []
@@ -99,7 +89,8 @@ class RSVP(object):
     return responses
 
   def route_internal(self, message, content):
-    """
+    """Route message to matching command.
+
     To be a valid rsvp command, the string must start with the string rsvp.
     To ensure that we can match things exactly, we must remove the extra whitespace.
     We then pattern-match it with every known command pattern.
@@ -140,8 +131,8 @@ class RSVP(object):
 
 
   def create_message_from_message(self, message, body):
-    """
-    Convenience method for creating a zulip response message from a given zulip input message.
+    """Convenience method for creating a zulip response message from a
+    given zulip input message.
     """
     if body:
       return {
@@ -154,9 +145,7 @@ class RSVP(object):
 
 
   def format_message(self, message):
-    """
-    Convenience method for creating a zulip response message from an RSVP message.
-    """
+    """Convenience method for creating a zulip response message from an RSVP message."""
     return {
       'subject': message.subject,
       'display_recipient': message.to,
@@ -165,16 +154,8 @@ class RSVP(object):
     }
 
   def event_id(self, message):
-    """
-    An event's identifier is the concatenation of the 'display_recipient'
-    (zulip slang for the stream's name)
-    and the message's subject (aka the thread's title.)
-    """
-    return u'{}/{}'.format(message['display_recipient'], message['subject'])
+    """Extract the `event_id` from a message.
 
-
-  def event_id_from_subject_url(self, message):
-    """
     An event's identifier is the concatenation of the 'display_recipient'
     (zulip slang for the stream's name)
     and the message's subject (aka the thread's title.)
@@ -182,9 +163,7 @@ class RSVP(object):
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
   def normalize_whitespace(self, content):
-    # Strips trailing and leading whitespace, and normalizes contiguous
-    # Whitespace with a single space.
-    lines = []
-    for line in content.strip().split('\n'):
-     lines.append(re.sub(r'\s+', ' ', line))
-    return lines
+    """Strips trailing and leading whitespace, and normalizes contiguous
+    whitespace with a single space.
+    """
+    return [re.sub(r'\s+', ' ', line) for line in content.strip().split('\n')]

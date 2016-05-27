@@ -9,8 +9,8 @@ import util
 
 
 class RSVPMessage(object):
-  """
-  Class that represents a response from an RSVPCommand.
+  """Class that represents a response from an RSVPCommand.
+
   Every call to an RSVPCommand instance's execute() method is expected to return an instance
   of this class.
   """
@@ -40,9 +40,7 @@ class RSVPCommandResponse(object):
 
 
 class RSVPCommand(object):
-  """
-  Base class for an RSVPCommand
-  """
+  """Base class for an RSVPCommand."""
   regex = None
 
   def __init__(self, prefix, *args, **kwargs):
@@ -54,16 +52,12 @@ class RSVPCommand(object):
     return re.match(self.regex, input_str, flags=re.DOTALL|re.I)
 
   def execute(self, events, *args, **kwargs):
-    """
-    execute() is just a convenience wrapper around __run()
-    """
+    """execute() is just a convenience wrapper around __run()."""
     return self.run(events, *args, **kwargs)
 
 
 class RSVPEventNeededCommand(RSVPCommand):
-  """
-  Base class for a command where an event needs to exist prior to execution
-  """
+  """Base class for a command where an event needs to exist prior to execution."""
   def execute(self, events, *args, **kwargs):
     event = kwargs.get('event')
     if event:
@@ -411,9 +405,6 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
     hours, minutes = int(kwargs.pop('hours')), int(kwargs.pop('minutes'))
 
     if hours in range(0, 24) and minutes in range(0, 60):
-      """
-      We'll store the time as the number of seconds since 00:00
-      """
       events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
       body = strings.MSG_TIME_SET % (hours, minutes)
     else:

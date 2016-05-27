@@ -7,10 +7,10 @@ import rsvp
 
 
 class Bot():
-    ''' bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
+    """ bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
         an optional caption or list of captions, and a list of the zulip streams it should be active in.
         it then posts a caption and a randomly selected gif in response to zulip messages.
-     '''
+     """
     def __init__(self, zulip_username, zulip_api_key, key_word, subscribed_streams=[], zulip_site=None):
         self.username = zulip_username
         self.api_key = zulip_api_key
@@ -23,8 +23,7 @@ class Bot():
 
     @property
     def streams(self):
-        ''' Standardizes a list of streams in the form [{'name': stream}]
-        '''
+        """Standardizes a list of streams in the form [{'name': stream}]."""
         if not self.subscribed_streams:
             streams = [{'name': stream['name']} for stream in self.get_all_zulip_streams()]
             return streams
@@ -33,8 +32,7 @@ class Bot():
             return streams
 
     def get_all_zulip_streams(self):
-        ''' Call Zulip API to get a list of all streams
-        '''
+        """Call Zulip API to get a list of all streams."""
         response = requests.get(self.client.base_url + 'v1/streams', auth=(self.username, self.api_key))
         if response.status_code == 200:
             return response.json()['streams']
@@ -44,13 +42,11 @@ class Bot():
             raise RuntimeError(':( we failed to GET streams.\n(%s)' % response)
 
     def subscribe_to_streams(self):
-        ''' Subscribes to zulip streams
-        '''
+        """Subscribes to zulip streams."""
         self.client.add_subscriptions(self.streams)
 
     def respond(self, message):
-        ''' Now we have an event dict, we should analyze it completely.
-        '''
+        """Now we have an event dict, we should analyze it completely."""
 
         replies = self.rsvp.process_message(message)
 
@@ -59,8 +55,7 @@ class Bot():
                 self.send_message(reply)
 
     def send_message(self, msg):
-        ''' Sends a message to zulip stream or user
-        '''
+        """Sends a message to zulip stream or user."""
         msg_to = msg['display_recipient']
         if msg['type'] == 'private':
             msg_to = msg['sender_email']
@@ -73,12 +68,11 @@ class Bot():
         })
 
     def main(self):
-        ''' Blocking call that runs forever. Calls self.respond() on every event received.
-        '''
+        """Blocking call that runs forever. Calls self.respond() on every event received."""
         self.client.call_on_each_message(lambda msg: self.respond(msg))
 
 
-''' The Customization Part!
+""" The Customization Part!
 
     Create a zulip bot under "settings" on zulip.
     Zulip will give you a username and API key
@@ -89,7 +83,7 @@ class Bot():
     subscribed_streams is a list of the streams the bot should be active on. An empty
         list defaults to ALL zulip streams
 
-'''
+"""
 if __name__ == "__main__":
   zulip_username = os.environ['ZULIP_RSVP_EMAIL']
   zulip_api_key = os.environ['ZULIP_RSVP_KEY']
