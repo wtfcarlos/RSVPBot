@@ -6,7 +6,7 @@ import os
 import rsvp
 
 
-class bot():
+class Bot():
     ''' bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
         an optional caption or list of captions, and a list of the zulip streams it should be active in.
         it then posts a caption and a randomly selected gif in response to zulip messages.
@@ -90,14 +90,14 @@ class bot():
         list defaults to ALL zulip streams
 
 '''
+if __name__ == "__main__":
+  zulip_username = os.environ['ZULIP_RSVP_EMAIL']
+  zulip_api_key = os.environ['ZULIP_RSVP_KEY']
+  zulip_site = os.getenv('ZULIP_RSVP_SITE', None)
+  key_word = 'rsvp'
 
-zulip_username = os.environ['ZULIP_RSVP_EMAIL']
-zulip_api_key = os.environ['ZULIP_RSVP_KEY']
-zulip_site = os.getenv('ZULIP_RSVP_SITE', None)
-key_word = 'rsvp'
+  sandbox_stream = os.getenv('ZULIP_RSVP_SANDBOX_STREAM', '')
+  subscribed_streams = []
 
-sandbox_stream = os.getenv('ZULIP_RSVP_SANDBOX_STREAM', '')
-subscribed_streams = []
-
-new_bot = bot(zulip_username, zulip_api_key, key_word, subscribed_streams, zulip_site=zulip_site)
-new_bot.main()
+  new_bot = Bot(zulip_username, zulip_api_key, key_word, subscribed_streams, zulip_site=zulip_site)
+  new_bot.main()
