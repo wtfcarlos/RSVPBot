@@ -2,7 +2,8 @@ import urlparse
 import urllib
 import re
 
-base = "http://localhost:9991/"
+BASE = "http://localhost:9991/"
+
 
 def narrow_url_to_stream_topic(url):
   parsed_url = urlparse.urlparse(url)
@@ -23,6 +24,6 @@ def stream_topic_to_narrow_url(stream, topic):
   fragment = ("#narrow/stream/%s/topic/%s") % (quoted_stream, quoted_topic)
 
   zulipped_fragment = fragment.replace('%', '.')
-  url = base + zulipped_fragment
+  url = BASE + zulipped_fragment
 
   return url
