@@ -4,7 +4,7 @@ import re
 import datetime
 import random
 
-from strings import *
+import strings
 import util
 
 """
@@ -68,7 +68,7 @@ class RSVPEventNeededCommand(RSVPCommand):
     event = kwargs.get('event')
     if event:
       return self.run(events, *args, **kwargs)
-    return RSVPCommandResponse(events, RSVPMessage('stream', ERROR_NOT_AN_EVENT))
+    return RSVPCommandResponse(events, RSVPMessage('stream', strings.ERROR_NOT_AN_EVENT))
 
 
 class RSVPInitCommand(RSVPCommand):
@@ -79,11 +79,11 @@ class RSVPInitCommand(RSVPCommand):
     event_id    = kwargs.pop('event_id')
     subject    = kwargs.pop('subject')
 
-    body = MSG_INIT_SUCCESSFUL
+    body = strings.MSG_INIT_SUCCESSFUL
 
     if events.get(event_id):
       # Event already exists, error message, we can't initialize twice.
-      body = ERROR_ALREADY_AN_EVENT
+      body = strings.ERROR_ALREADY_AN_EVENT
     else:
       # Update the dictionary with the new event and commit.
       events.update(
@@ -144,10 +144,10 @@ class RSVPCancelCommand(RSVPEventNeededCommand):
     creator = event['creator']
 
     if creator == sender_id:
-      body = MSG_EVENT_CANCELED
+      body = strings.MSG_EVENT_CANCELED
       events.pop(event_id)
     else:
-      body = ERROR_NOT_AUTHORIZED_TO_DELETE
+      body = strings.ERROR_NOT_AUTHORIZED_TO_DELETE
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
@@ -168,22 +168,22 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
 
     # check and make sure a valid Zulip stream/topic URL is passed
     if not destination: 
-      body = ERROR_MISSING_MOVE_DESTINATION
+      body = strings.ERROR_MISSING_MOVE_DESTINATION
     elif creator != sender_id:
-      body = ERROR_NOT_AUTHORIZED_TO_DELETE
+      body = strings.ERROR_NOT_AUTHORIZED_TO_DELETE
     else:
       # split URL into components
       stream, topic = util.narrow_url_to_stream_topic(destination)
 
       if stream is None or topic is None:
-        body = ERROR_BAD_MOVE_DESTINATION % destination
+        body = strings.ERROR_BAD_MOVE_DESTINATION % destination
       else:
         new_event_id = stream + "/" + topic
 
         if new_event_id in events:
-          body = ERROR_MOVE_ALREADY_AN_EVENT % new_event_id
+          body = strings.ERROR_MOVE_ALREADY_AN_EVENT % new_event_id
         else:
-          body = MSG_EVENT_MOVED % (new_event_id, destination)
+          body = strings.MSG_EVENT_MOVED % (new_event_id, destination)
 
           old_event = events.pop(event_id)
 
@@ -201,12 +201,14 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
             }
           )
 
-          success_msg = RSVPMessage('stream', MSG_INIT_SUCCESSFUL, stream, topic)
+          success_msg = RSVPMessage('stream', strings.MSG_INIT_SUCCESSFUL, stream, topic)
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body), success_msg)
 
+
 class LimitReachedException(Exception):
   pass
+
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
   regex = r'.*?\b(?P<decision>(yes|no|maybe))\b'
@@ -355,7 +357,8 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       return RSVPCommandResponse(events, RSVPMessage('stream', response_string))
 
     except LimitReachedException:
-      return RSVPCommandResponse(events, RSVPMessage('stream', ERROR_LIMIT_REACHED))
+      return RSVPCommandResponse(events, RSVPMessage('stream', strings.ERROR_LIMIT_REACHED))
+
 
 class RSVPSetLimitCommand(RSVPEventNeededCommand):
   regex = r'set limit (?P<limit>\d+)$'
@@ -365,7 +368,7 @@ class RSVPSetLimitCommand(RSVPEventNeededCommand):
     event = kwargs.pop('event')
     attendance_limit = int(kwargs.pop('limit'))
     event['limit'] = attendance_limit
-    return RSVPCommandResponse(events, RSVPMessage('stream', MSG_ATTENDANCE_LIMIT_SET % attendance_limit))
+    return RSVPCommandResponse(events, RSVPMessage('stream', strings.MSG_ATTENDANCE_LIMIT_SET % attendance_limit))
 
 
 class RSVPSetDateCommand(RSVPEventNeededCommand):
@@ -393,9 +396,9 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
     if self.validate_future_date(day, month, year):
       event['date'] = str(datetime.date(year, month, day))
       events[event_id] = event
-      body = MSG_DATE_SET % (month, day, year)
+      body = strings.MSG_DATE_SET % (month, day, year)
     else:
-      body = ERROR_DATE_NOT_VALID % (month, day, year)
+      body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
@@ -412,11 +415,12 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
       We'll store the time as the number of seconds since 00:00
       """
       events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
-      body = MSG_TIME_SET % (hours, minutes)
+      body = strings.MSG_TIME_SET % (hours, minutes)
     else:
-      body = ERROR_TIME_NOT_VALID % (hours, minutes)
-      
+      body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
+
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
+
 
 class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
   regex = r'set time allday$'
@@ -424,7 +428,8 @@ class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     events[event_id]['time'] = None
-    return RSVPCommandResponse(events, RSVPMessage('stream', MSG_TIME_SET_ALLDAY))
+    return RSVPCommandResponse(events, RSVPMessage('stream', strings.MSG_TIME_SET_ALLDAY))
+
 
 class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
   regex = r'set (?P<attribute>(place|description)) (?P<value>.+)$'
@@ -436,7 +441,7 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
 
     events[event_id][attribute] = value
 
-    body = MSG_STRING_ATTR_SET % (attribute, value)
+    body = strings.MSG_STRING_ATTR_SET % (attribute, value)
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
 

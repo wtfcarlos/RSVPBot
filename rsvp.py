@@ -3,7 +3,8 @@ import re
 import json
 
 import commands
-from strings import *
+from strings import ERROR_INVALID_COMMAND
+
 
 class RSVP(object):
 
