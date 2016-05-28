@@ -457,6 +457,48 @@ class RSVPTest(unittest.TestCase):
         self.assertEqual('stream', output[0]['type'])
         self.assertEqual('test-stream', output[0]['display_recipient'])
 
+    def test_rsvp_multiple_commands(self):
+        commands = """
+rsvp set time 10:30
+rsvp set date 02/25/2100
+"""
+
+        output = self.issue_command(commands)
+        self.assertIn(
+            'has been set to **10:30**',
+            output[0]['body'])
+
+        self.assertEqual('10:30', self.event['time'])
+
+        self.assertIn(
+            'The date for this event has been set to **02/25/2100**!',
+            output[1]['body']
+        )
+        self.assertEqual( '2100-02-25', self.event['date'])
+
+    def test_rsvp_multiple_commands_with_other_text(self):
+        commands = """
+rsvp set time 10:30
+Looking forward to this!
+rsvp set date 02/25/2100
+"""
+
+        output = self.issue_command(commands)
+        self.assertIn(
+            'has been set to **10:30**',
+            output[0]['body'])
+
+        self.assertEqual('10:30', self.event['time'])
+
+        self.assertEqual(None, output[1])
+
+        self.assertIn(
+            'The date for this event has been set to **02/25/2100**!',
+            output[2]['body']
+        )
+        self.assertEqual( '2100-02-25', self.event['date'])
+
+
 if __name__ == '__main__':
     unittest.main()
 
