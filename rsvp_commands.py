@@ -437,6 +437,15 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
 
+def get_all_users_from_zulip_client(zulip_client=None):
+    all_users = None
+    if zulip_client:
+        users_result = zulip_client.get_users()
+        if users_result['result'] == 'success':
+            all_users = users_result['members']
+    return all_users
+
+
 class RSVPPingCommand(RSVPEventNeededCommand):
   regex = r'^({key_word} ping)$|({key_word} ping (?P<message>.+))$'
 
@@ -449,12 +458,9 @@ class RSVPPingCommand(RSVPEventNeededCommand):
     event = kwargs.pop('event')
     message = kwargs.get('message')
 
-    users_result = zulip_client.get_users()
-    all_users = None
-    if users_result['result'] == 'success':
-      all_users = users_result['members']
-
     body = "**Pinging all participants who RSVP'd!!**\n"
+
+    all_users = get_all_users_from_zulip_client(zulip_client)
 
     for participant in event['yes']:
       body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
@@ -535,10 +541,7 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']), len(event['maybe']))
 
-    users_result = zulip_client.get_users()
-    all_users = None
-    if users_result['result'] == 'success':
-      all_users = users_result['members']
+    all_users = get_all_users_from_zulip_client(zulip_client)
 
     row_list = map(None, event['yes'], event['no'], event['maybe'])
 

@@ -1,16 +1,22 @@
-import unittest
-import rsvp
-import os
-import datetime
 from collections import Counter
+import datetime
+import os
+import unittest
+
+from mock import patch
+
+import rsvp
+import rsvp_commands
+
 
 def testRSVP():
     return rsvp.RSVP(filename='test.json')
 
+
 class RSVPTest(unittest.TestCase):
 
     def setUp(self):
-        self.rsvp = rsvp.RSVP('rsvp', filename='test.json')
+        self.rsvp = rsvp.RSVP('rsvp', None, filename='test.json')
         self.issue_command('rsvp init')
         self.event = self.get_test_event()
 
@@ -38,7 +44,7 @@ class RSVPTest(unittest.TestCase):
     def issue_custom_command(self, command, **kwargs):
         message = self.create_input_message(content=command, **kwargs)
         return self.rsvp.process_message(message)
-        
+
     def get_test_event(self):
         return self.rsvp.events['test-stream/Testing']
 
@@ -96,35 +102,37 @@ class RSVPTest(unittest.TestCase):
         output = self.issue_command('rsvp yes')
 
         self.assertEqual(None, self.event['limit'])
-        self.assertIn('is attending!', output[0]['body'])
-        self.assertIn('Tester', self.event['yes'])
-        self.assertNotIn('Tester', self.event['no'])
-        self.assertNotIn('Tester', self.event['maybe'])
+        self.assertIn('@**Tester** is attending!', output[0]['body'])
+        self.assertIn('a@example.com', self.event['yes'])
+        self.assertNotIn('a@example.com', self.event['no'])
+        self.assertNotIn('a@example.com', self.event['maybe'])
 
     def test_rsvp_maybe_with_no_prior_reservation(self):
         output = self.issue_command('rsvp maybe')
 
         self.assertEqual(None, self.event['limit'])
-        self.assertIn("might be attending. It\'s complicated.", output[0]['body'])
-        self.assertIn('Tester', self.event['maybe'])
-        self.assertNotIn('Tester', self.event['no'])
-        self.assertNotIn('Tester', self.event['yes'])
+        self.assertIn("@**Tester** might be attending. It\'s complicated.", output[0]['body'])
+        self.assertIn('a@example.com', self.event['maybe'])
+        self.assertNotIn('a@example.com', self.event['no'])
+        self.assertNotIn('a@example.com', self.event['yes'])
 
     def test_rsvp_no_with_no_prior_reservation(self):
         output = self.issue_command('rsvp no')
 
-        self.assertIn('is **not** attending!', output[0]['body'])
-        self.assertNotIn('Tester', self.event['yes'])
-        self.assertNotIn('Tester', self.event['maybe'])
-        self.assertIn('Tester', self.event['no'])
+        self.assertIn('@**Tester** is **not** attending!', output[0]['body'])
+        self.assertNotIn('a@example.com', self.event['yes'])
+        self.assertNotIn('a@example.com', self.event['maybe'])
+        self.assertIn('a@example.com', self.event['no'])
 
     def test_rsvp_yes_with_prior_reservation(self):
         self.issue_command('rsvp yes')
-        output = self.issue_command('rsvp yes')
-
         count_dict = Counter(self.event['yes'])
 
-        self.assertEqual(1, count_dict['Tester'])
+        self.assertEqual(1, count_dict['a@example.com'])
+
+        self.issue_command('rsvp yes')
+        count_dict = Counter(self.event['yes'])
+        self.assertEqual(1, count_dict['a@example.com'])
 
     def test_rsvp_maybe_with_prior_reservation(self):
         self.issue_command('rsvp maybe')
@@ -132,7 +140,7 @@ class RSVPTest(unittest.TestCase):
 
         count_dict = Counter(self.event['maybe'])
 
-        self.assertEqual(1, count_dict['Tester'])
+        self.assertEqual(1, count_dict['a@example.com'])
 
     def test_rsvp_no_with_prior_cancelation(self):
         self.issue_command('rsvp no')
@@ -140,41 +148,41 @@ class RSVPTest(unittest.TestCase):
 
         count_dict = Counter(self.event['no'])
 
-        self.assertEqual(1, count_dict['Tester'])
+        self.assertEqual(1, count_dict['a@example.com'])
 
     def test_rsvp_changing_response(self):
         output = self.issue_command('rsvp maybe')
         count_dict = Counter(self.event['maybe'])
-        self.assertEqual(1, count_dict['Tester'])
-        self.assertIn("might be attending. It\'s complicated.", output[0]['body'])
+        self.assertEqual(1, count_dict['a@example.com'])
+        self.assertIn("@**Tester** might be attending. It\'s complicated.", output[0]['body'])
 
         # NOT in the yes or no lists
         count_dict = Counter(self.event['yes'])
-        self.assertEqual(0, count_dict['Tester'])
+        self.assertEqual(0, count_dict['a@example.com'])
         count_dict = Counter(self.event['no'])
-        self.assertEqual(0, count_dict['Tester'])
+        self.assertEqual(0, count_dict['a@example.com'])
 
         output = self.issue_command('rsvp no')
         count_dict = Counter(self.event['no'])
-        self.assertEqual(1, count_dict['Tester'])
-        self.assertIn('is **not** attending!', output[0]['body'])
+        self.assertEqual(1, count_dict['a@example.com'])
+        self.assertIn('@**Tester** is **not** attending!', output[0]['body'])
 
         # NOT in the yes or maybe lists
         count_dict = Counter(self.event['yes'])
-        self.assertEqual(0, count_dict['Tester'])
+        self.assertEqual(0, count_dict['a@example.com'])
         count_dict = Counter(self.event['maybe'])
-        self.assertEqual(0, count_dict['Tester'])
+        self.assertEqual(0, count_dict['a@example.com'])
 
         output = self.issue_command('rsvp yes')
         count_dict = Counter(self.event['yes'])
-        self.assertEqual(1, count_dict['Tester'])
-        self.assertIn('is attending!', output[0]['body'])
+        self.assertEqual(1, count_dict['a@example.com'])
+        self.assertIn('@**Tester** is attending!', output[0]['body'])
 
         # NOT in the no or maybe lists
         count_dict = Counter(self.event['no'])
-        self.assertEqual(0, count_dict['Tester'])
+        self.assertEqual(0, count_dict['a@example.com'])
         count_dict = Counter(self.event['maybe'])
-        self.assertEqual(0, count_dict['Tester'])
+        self.assertEqual(0, count_dict['a@example.com'])
 
     def test_set_limit(self):
         output = self.issue_command('rsvp set limit 1')
@@ -304,29 +312,52 @@ class RSVPTest(unittest.TestCase):
     def test_limit_actually_works(self):
         self.issue_command('rsvp set limit 500')
         self.issue_command('rsvp yes')
-        output = self.issue_custom_command('rsvp yes', sender_full_name='Sender B')
+        output = self.issue_custom_command(
+            'rsvp yes',
+            sender_full_name='Sender B',
+            sender_email='b@example.com'
+        )
 
         self.assertEqual('@**Sender B** is attending!', output[0]['body'])
-        self.assertIn('Sender B', self.event['yes'])
+        self.assertIn('b@example.com', self.event['yes'])
         self.assertEqual(498, self.event['limit'] - len(self.event['yes']))
 
     def test_ping_yes(self):
-        self.issue_custom_command('rsvp yes', sender_full_name='A')
-        self.issue_custom_command('rsvp yes', sender_full_name='B')
-        self.issue_custom_command('rsvp yes', sender_full_name='C')
-        self.issue_custom_command('rsvp yes', sender_full_name='D')
+        users = [
+            ('yes', 'A', 'a@example.com'),
+            ('yes', 'B', 'b@example.com'),
+            ('yes', 'C', 'c@example.com'),
+            ('yes', 'D', 'd@example.com'),
+            ('no', 'E', 'e@example.com'),
+            ('no', 'F', 'f@example.com'),
+            ('no', 'G', 'g@example.com'),
+            ('no', 'H', 'h@example.com'),
+            ('maybe', 'W', 'w@example.com'),
+            ('maybe', 'X', 'x@example.com'),
+            ('maybe', 'Y', 'y@example.com'),
+            ('maybe', 'Z', 'z@example.com'),
+        ]
+        for user in users:
+            command = 'rsvp {response}'.format(response=user[0])
+            sender_full_name = user[1]
+            sender_email = user[2]
+            self.issue_custom_command(
+                command,
+                sender_full_name=sender_full_name,
+                sender_email=sender_email
+            )
 
-        self.issue_custom_command('rsvp no', sender_full_name='E')
-        self.issue_custom_command('rsvp no', sender_full_name='F')
-        self.issue_custom_command('rsvp no', sender_full_name='G')
-        self.issue_custom_command('rsvp no', sender_full_name='H')
+        zulip_api_response = [
+            {'full_name': name, 'email': email}
+            for (_, name, email) in users
+        ]
 
-        self.issue_custom_command('rsvp maybe', sender_full_name='W')
-        self.issue_custom_command('rsvp maybe', sender_full_name='X')
-        self.issue_custom_command('rsvp maybe', sender_full_name='Y')
-        self.issue_custom_command('rsvp maybe', sender_full_name='Z')
+        # no actual zulip_client in tests, so we have to mock the response
+        with patch.object(rsvp_commands,
+                          'get_all_users_from_zulip_client',
+                          return_value=zulip_api_response):
 
-        output = self.issue_command('rsvp ping')
+            output = self.issue_command('rsvp ping')
 
         # yeses
         self.assertIn('@**A**', output[0]['body'])
@@ -346,9 +377,14 @@ class RSVPTest(unittest.TestCase):
         self.assertNotIn('@**H**', output[0]['body'])
 
     def test_ping_message(self):
-        self.issue_custom_command('rsvp yes', sender_full_name='A')
+        self.issue_custom_command('rsvp yes', sender_full_name='A', sender_email='a@example.com')
 
-        output = self.issue_command('rsvp ping message!!!')
+        # no actual zulip_client in tests, so we have to mock the response
+        with patch.object(rsvp_commands,
+                          'get_all_users_from_zulip_client',
+                          return_value=[{'full_name': 'A', 'email': 'a@example.com'}]):
+
+            output = self.issue_command('rsvp ping message!!!')
 
         self.assertIn('@**A**', output[0]['body'])
         self.assertIn('message!!!', output[0]['body'])
@@ -360,22 +396,25 @@ class RSVPTest(unittest.TestCase):
         self.assertIn(self.event['description'], output[0]['body'])
 
     def test_rsvp_ping_with_yes(self):
-        self.issue_custom_command('rsvp yes', sender_full_name='A')
-        output = self.issue_command('rsvp ping we\'re all going to the yes concert')
+        self.issue_custom_command('rsvp yes', sender_full_name='B', sender_email='b@example.com')
+        with patch.object(rsvp_commands,
+                          'get_all_users_from_zulip_client',
+                          return_value=[{'full_name': 'B', 'email': 'b@example.com'}]):
+            output = self.issue_command('rsvp ping we\'re all going to the yes concert')
         self.assertEqual(None, self.event['limit'])
-        self.assertNotIn('is attending!', output[0]['body'])
-        self.assertNotIn('Tester', self.event['yes'])
-        self.assertNotIn('Tester', self.event['no'])
-        self.assertIn('@**A**', output[0]['body'])
+        self.assertNotIn('@**Tester** is attending!', output[0]['body'])
+        self.assertNotIn('a@example.com', self.event['yes'])
+        self.assertNotIn('a@example.com', self.event['no'])
+        self.assertIn('@**B**', output[0]['body'])
         self.assertIn('we\'re all going to the yes concert', output[0]['body'])
-    
+
     def general_yes_with_no_prior_reservation(self, msg):
         output = self.issue_command(msg)
 
         self.assertEqual(None, self.event['limit'])
         self.assertIn('is attending!', output[0]['body'])
-        self.assertIn('Tester', self.event['yes'])
-        self.assertNotIn('Tester', self.event['no'])
+        self.assertIn('a@example.com', self.event['yes'])
+        self.assertNotIn('a@example.com', self.event['no'])
 
     def test_rsvp_hell_yes(self):
         self.general_yes_with_no_prior_reservation('rsvp hell yes')
@@ -398,9 +437,9 @@ class RSVPTest(unittest.TestCase):
 
         self.assertEqual(None, self.event['limit'])
         self.assertNotIn('is attending!', output[0]['body'])
-        self.assertIn('is **not** attending!', output[0]['body'])
-        self.assertNotIn('Tester', self.event['yes'])
-        self.assertIn('Tester', self.event['no'])
+        self.assertIn('@**Tester** is **not** attending!', output[0]['body'])
+        self.assertNotIn('a@example.com', self.event['yes'])
+        self.assertIn('a@example.com', self.event['no'])
 
     def test_rsvp_hell_no(self):
         self.general_no_with_no_prior_reservation('rsvp hell no!')
@@ -414,12 +453,11 @@ class RSVPTest(unittest.TestCase):
         self.assertIn('is not a valid RSVPBot command!', output[0]['body'])
         self.assertNotIn('is attending!', output[0]['body'])
         self.assertNotIn('is **not** attending!', output[0]['body'])
-        self.assertNotIn('Tester', self.event['yes'])
-        self.assertNotIn('Tester', self.event['no'])
+        self.assertNotIn('a@example.com', self.event['yes'])
+        self.assertNotIn('a@example.com', self.event['no'])
 
     def test_rsvp_nose(self):
         self.rsvp_word_contains_command('rsvp nose jobs')
-
 
     def test_rsvp_yesterday(self):
         self.rsvp_word_contains_command('rsvp yesterday')
@@ -436,7 +474,7 @@ class RSVPTest(unittest.TestCase):
         self.assertIn('The description for this event has been set', output[0]['body'])
         self.assertIn(self.event['description'], output[0]['body'])
         self.assertNotIn('is attending!', output[0]['body'])
-        self.assertNotIn('Tester', self.event['yes'])
+        self.assertNotIn('a@example.com', self.event['yes'])
 
     def test_rsvp_yes_exclamation_no_plans(self):
         self.general_yes_with_no_prior_reservation('rsvp yes! i couldn\'t say no')
