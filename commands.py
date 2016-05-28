@@ -292,7 +292,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     " Oh no!!",
   ]
 
-  def confirm(self, event, sender_full_name, decision):
+  def confirm(self, event, sender_email, decision):
     # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
     # all currently logged events have passed.
     if ('maybe' not in event.keys()):
@@ -303,28 +303,29 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       # prevent duplicates if replying multiple times
       if (response == decision):
         # if they're already in that list, nothing to do
-        if (sender_full_name not in event[response]):
-          event[response].append(sender_full_name)
+        if (sender_email not in event[response]):
+          event[response].append(sender_email)
       # else, remove all instances of them from other response lists.
-      elif sender_full_name in event[response]:
-        event[response] = [value for value in event[response] if value != sender_full_name]
+      elif sender_email in event[response]:
+        event[response] = [value for value in event[response] if value != sender_email]
 
     return event
 
-  def attempt_confirm(self, event, sender_full_name, decision, limit):
+  def attempt_confirm(self, event, sender_email, decision, limit):
     if decision == 'yes' and limit:
       available_seats = limit - len(event['yes'])
       # In this case, we need to do some extra checking for the attendance limit.
       if (available_seats - 1 < 0):
         raise LimitReachedException()
 
-    return self.confirm(event, sender_full_name, decision)
+    return self.confirm(event, sender_email, decision)
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     event = kwargs.pop('event')
     decision = kwargs.pop('decision').lower()
     sender_full_name = kwargs.pop('sender_full_name')
+    sender_email = kwargs.pop('sender_email')
 
     limit = event['limit']
 
@@ -336,7 +337,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
 
     try:
-      event = self.attempt_confirm(event, sender_full_name, decision, limit)
+      event = self.attempt_confirm(event, sender_email, decision, limit)
 
       if sender_full_name in self.vips:
         if decision == 'yes':

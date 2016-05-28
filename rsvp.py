@@ -108,6 +108,7 @@ class RSVP(object):
           kwargs = {
             'event': self.events.get(event_id),
             'event_id': event_id,
+            'sender_email': message['sender_email'],
             'sender_full_name': message['sender_full_name'],
             'sender_id': message['sender_id'],
             'subject': message['subject'],
