@@ -18,8 +18,9 @@ class Bot():
         self.key_word = key_word.lower()
         self.subscribed_streams = subscribed_streams
         self.client = zulip.Client(zulip_username, zulip_api_key, site=zulip_site)
+        self.client._register('get_users', method='GET', url='users')
         self.subscriptions = self.subscribe_to_streams()
-        self.rsvp = rsvp.RSVP(key_word)
+        self.rsvp = rsvp.RSVP(key_word, self.client)
 
     @property
     def streams(self):

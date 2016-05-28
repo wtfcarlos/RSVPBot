@@ -2,13 +2,13 @@ from __future__ import with_statement
 import re
 import json
 
-import commands
+import rsvp_commands
 from strings import ERROR_INVALID_COMMAND
 
 
 class RSVP(object):
 
-  def __init__(self, key_word, filename='events.json'):
+  def __init__(self, key_word, zulip_client, filename='events.json'):
     """
     When created, this instance will try to open self.filename. It will always
     keep a copy in memory of the whole events dictionary and commit it when necessary.
@@ -16,22 +16,23 @@ class RSVP(object):
     self.key_word = key_word
     self.filename = filename
     self.command_list = (
-      commands.RSVPInitCommand(key_word),
-      commands.RSVPHelpCommand(key_word),
-      commands.RSVPCancelCommand(key_word),
-      commands.RSVPMoveCommand(key_word),
-      commands.RSVPSetLimitCommand(key_word),
-      commands.RSVPSetDateCommand(key_word),
-      commands.RSVPSetTimeCommand(key_word),
-      commands.RSVPSetTimeAllDayCommand(key_word),
-      commands.RSVPSetStringAttributeCommand(key_word),
-      commands.RSVPSummaryCommand(key_word),
-      commands.RSVPPingCommand(key_word),
-      commands.RSVPCreditsCommand(key_word),
+      rsvp_commands.RSVPInitCommand(key_word),
+      rsvp_commands.RSVPHelpCommand(key_word),
+      rsvp_commands.RSVPCancelCommand(key_word),
+      rsvp_commands.RSVPMoveCommand(key_word),
+      rsvp_commands.RSVPSetLimitCommand(key_word),
+      rsvp_commands.RSVPSetDateCommand(key_word),
+      rsvp_commands.RSVPSetTimeCommand(key_word),
+      rsvp_commands.RSVPSetTimeAllDayCommand(key_word),
+      rsvp_commands.RSVPSetStringAttributeCommand(key_word),
+      rsvp_commands.RSVPSummaryCommand(key_word),
+      rsvp_commands.RSVPPingCommand(key_word),
+      rsvp_commands.RSVPCreditsCommand(key_word),
 
       # This needs to be at last for fuzzy yes|no checking
-      commands.RSVPConfirmCommand(key_word)
+      rsvp_commands.RSVPConfirmCommand(key_word)
     )
+    self.zulip_client = zulip_client
 
     try:
       with open(self.filename, "r") as f:
@@ -80,7 +81,6 @@ class RSVP(object):
 
   def route(self, message):
     """Split multiple line message and collate the responses."""
-
     content = message['content']
     responses = []
     lines = self.normalize_whitespace(content)
@@ -108,6 +108,7 @@ class RSVP(object):
           kwargs = {
             'event': self.events.get(event_id),
             'event_id': event_id,
+            'sender_email': message['sender_email'],
             'sender_full_name': message['sender_full_name'],
             'sender_id': message['sender_id'],
             'subject': message['subject'],
@@ -116,7 +117,7 @@ class RSVP(object):
           if matches.groupdict():
             kwargs.update(matches.groupdict())
 
-          response = command.execute(self.events, **kwargs)
+          response = command.execute(self.events, self.zulip_client, **kwargs)
 
           # Allow for a single events object but multiple messaages to send
           self.events = response.events
@@ -126,8 +127,8 @@ class RSVP(object):
           # the pair
           return response.messages
 
-      return [commands.RSVPMessage('stream', ERROR_INVALID_COMMAND % (content))]
-    return [commands.RSVPMessage('private', None)]
+      return [rsvp_commands.RSVPMessage('stream', ERROR_INVALID_COMMAND % (content))]
+    return [rsvp_commands.RSVPMessage('private', None)]
 
 
   def create_message_from_message(self, message, body):

@@ -292,39 +292,40 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     " Oh no!!",
   ]
 
-  def confirm(self, event, sender_full_name, decision):
+  def confirm(self, event, sender_email, decision):
     # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
     # all currently logged events have passed.
     if ('maybe' not in event.keys()):
-      event['maybe'] = [];
+      event['maybe'] = []
 
     # If they're in a different response list, take them out of it.
     for response in self.responses.keys():
       # prevent duplicates if replying multiple times
       if (response == decision):
         # if they're already in that list, nothing to do
-        if (sender_full_name not in event[response]):
-          event[response].append(sender_full_name)
+        if (sender_email not in event[response]):
+          event[response].append(sender_email)
       # else, remove all instances of them from other response lists.
-      elif sender_full_name in event[response]:
-        event[response] = [value for value in event[response] if value != sender_full_name]
+      elif sender_email in event[response]:
+        event[response] = [value for value in event[response] if value != sender_email]
 
     return event
 
-  def attempt_confirm(self, event, sender_full_name, decision, limit):
+  def attempt_confirm(self, event, sender_email, decision, limit):
     if decision == 'yes' and limit:
       available_seats = limit - len(event['yes'])
       # In this case, we need to do some extra checking for the attendance limit.
       if (available_seats - 1 < 0):
         raise LimitReachedException()
 
-    return self.confirm(event, sender_full_name, decision)
+    return self.confirm(event, sender_email, decision)
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     event = kwargs.pop('event')
     decision = kwargs.pop('decision').lower()
     sender_full_name = kwargs.pop('sender_full_name')
+    sender_email = kwargs.pop('sender_email')
 
     limit = event['limit']
 
@@ -336,7 +337,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
 
     try:
-      event = self.attempt_confirm(event, sender_full_name, decision, limit)
+      event = self.attempt_confirm(event, sender_email, decision, limit)
 
       if sender_full_name in self.vips:
         if decision == 'yes':
@@ -436,6 +437,15 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
 
+def get_all_users_from_zulip_client(zulip_client=None):
+    all_users = None
+    if zulip_client:
+        users_result = zulip_client.get_users()
+        if users_result['result'] == 'success':
+            all_users = users_result['members']
+    return all_users
+
+
 class RSVPPingCommand(RSVPEventNeededCommand):
   regex = r'^({key_word} ping)$|({key_word} ping (?P<message>.+))$'
 
@@ -443,21 +453,33 @@ class RSVPPingCommand(RSVPEventNeededCommand):
     self.regex = self.regex.format(key_word=prefix)
 
   def run(self, events, *args, **kwargs):
+    zulip_client = args[0]
+
     event = kwargs.pop('event')
     message = kwargs.get('message')
 
     body = "**Pinging all participants who RSVP'd!!**\n"
 
+    all_users = get_all_users_from_zulip_client(zulip_client)
+
     for participant in event['yes']:
-      body += "@**%s** " % participant
+      body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
 
     for participant in event['maybe']:
-      body += "@**%s** " % participant
+      body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
 
     if message:
       body += ('\n' + message)
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
+
+
+def convert_name_or_email_to_pingable_name(all_users, name_or_email):
+  if all_users:
+    for user in all_users:
+      if user['email'] == name_or_email:
+        return user['full_name']
+  return name_or_email
 
 
 class RSVPCreditsCommand(RSVPEventNeededCommand):
@@ -498,6 +520,7 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
+    zulip_client = args[0]
 
     limit_str = 'No Limit!'
 
@@ -518,13 +541,15 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']), len(event['maybe']))
 
+    all_users = get_all_users_from_zulip_client(zulip_client)
+
     row_list = map(None, event['yes'], event['no'], event['maybe'])
 
     for row in row_list:
       confirmation_table += '{}|{}|{}\n'.format(
-        '' if row[0] is None else row[0],
-        '' if row[1] is None else row[1],
-        '' if row[2] is None else row[2]
+        '' if row[0] is None else convert_name_or_email_to_pingable_name(all_users, row[0]),
+        '' if row[1] is None else convert_name_or_email_to_pingable_name(all_users, row[1]),
+        '' if row[2] is None else convert_name_or_email_to_pingable_name(all_users, row[2])
       )
     else:
       confirmation_table += '\t|\t'
