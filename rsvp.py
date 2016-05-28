@@ -1,11 +1,10 @@
 from __future__ import with_statement
 import re
 import json
-import time
-import datetime
 
 import commands
-from strings import *
+from strings import ERROR_INVALID_COMMAND
+
 
 class RSVP(object):
 
@@ -44,30 +43,22 @@ class RSVP(object):
       self.events = {}
 
   def commit_events(self):
-    """
-    Write the whole events dictionary to the filename file.
-    """
+    """Write the whole events dictionary to the filename file."""
     with open(self.filename, 'w+') as f:
       json.dump(self.events, f)
 
   def __exit__(self, type, value, traceback):
-    """
-    Before the program terminates, commit events.
-    """
+    """Before the program terminates, commit events."""
     self.commit_events()
 
   def get_this_event(self, message):
-    """
-    Returns the event relevant to this Zulip thread
-    """
+    """Returns the event relevant to this Zulip thread."""
     event_id = self.event_id(message)
-    
+
     return self.events.get(event_id)
 
   def process_message(self, message):
-    """
-    Processes the received message and returns a new message, to send back to the user.
-    """
+    """Processes the received message and returns a new message, to send back to the user."""
 
     # adding handling of mulitples, dammit.
     replies = self.route(message)
@@ -81,16 +72,14 @@ class RSVP(object):
       if not reply.to:
         # this uses invisible side effects and I don't care for it.
         messages.append(self.create_message_from_message(message, reply.body))
-      else: 
+      else:
         # this is sending to a stream other than the one the incoming message
         messages.append(self.format_message(reply))
 
     return messages
 
   def route(self, message):
-    """
-    Split multiple line message and collate the responses.
-    """
+    """Split multiple line message and collate the responses."""
 
     content = message['content']
     responses = []
@@ -100,7 +89,8 @@ class RSVP(object):
     return responses
 
   def route_internal(self, message, content):
-    """
+    """Route message to matching command.
+
     To be a valid rsvp command, the string must start with the string rsvp.
     To ensure that we can match things exactly, we must remove the extra whitespace.
     We then pattern-match it with every known command pattern.
@@ -132,7 +122,7 @@ class RSVP(object):
           self.events = response.events
           self.commit_events()
 
-          # if it has multiple messages to send, then return that instead of 
+          # if it has multiple messages to send, then return that instead of
           # the pair
           return response.messages
 
@@ -141,8 +131,8 @@ class RSVP(object):
 
 
   def create_message_from_message(self, message, body):
-    """
-    Convenience method for creating a zulip response message from a given zulip input message.
+    """Convenience method for creating a zulip response message from a
+    given zulip input message.
     """
     if body:
       return {
@@ -155,9 +145,7 @@ class RSVP(object):
 
 
   def format_message(self, message):
-    """
-    Convenience method for creating a zulip response message from an RSVP message.
-    """
+    """Convenience method for creating a zulip response message from an RSVP message."""
     return {
       'subject': message.subject,
       'display_recipient': message.to,
@@ -166,26 +154,16 @@ class RSVP(object):
     }
 
   def event_id(self, message):
-    """
+    """Extract the `event_id` from a message.
+
     An event's identifier is the concatenation of the 'display_recipient'
     (zulip slang for the stream's name)
     and the message's subject (aka the thread's title.)
     """
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
-
-  def event_id_from_subject_url(self, message):
-    """
-    An event's identifier is the concatenation of the 'display_recipient'
-    (zulip slang for the stream's name)
-    and the message's subject (aka the thread's title.)
-    """
-    return u'{}/{}'.format(message['display_recipient'], message['subject'])    
-
   def normalize_whitespace(self, content):
-    # Strips trailing and leading whitespace, and normalizes contiguous
-    # Whitespace with a single space.
-    lines = []
-    for line in content.strip().split('\n'):
-     lines.append(re.sub(r'\s+', ' ', line))
-    return lines
+    """Strips trailing and leading whitespace, and normalizes contiguous
+    whitespace with a single space.
+    """
+    return [re.sub(r'\s+', ' ', line) for line in content.strip().split('\n')]
