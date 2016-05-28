@@ -296,7 +296,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
     # all currently logged events have passed.
     if ('maybe' not in event.keys()):
-      event['maybe'] = [];
+      event['maybe'] = []
 
     # If they're in a different response list, take them out of it.
     for response in self.responses.keys():
@@ -443,21 +443,36 @@ class RSVPPingCommand(RSVPEventNeededCommand):
     self.regex = self.regex.format(key_word=prefix)
 
   def run(self, events, *args, **kwargs):
+    zulip_client = args[0]
+
     event = kwargs.pop('event')
     message = kwargs.get('message')
+
+    users_result = zulip_client.get_users()
+    all_users = None
+    if users_result['result'] == 'success':
+      all_users = users_result['members']
 
     body = "**Pinging all participants who RSVP'd!!**\n"
 
     for participant in event['yes']:
-      body += "@**%s** " % participant
+      body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
 
     for participant in event['maybe']:
-      body += "@**%s** " % participant
+      body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
 
     if message:
       body += ('\n' + message)
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
+
+
+def convert_name_or_email_to_pingable_name(all_users, name_or_email):
+  if all_users:
+    for user in all_users:
+      if user['email'] == name_or_email:
+        return user['full_name']
+  return name_or_email
 
 
 class RSVPCreditsCommand(RSVPEventNeededCommand):
@@ -498,6 +513,7 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
+    zulip_client = args[0]
 
     limit_str = 'No Limit!'
 
@@ -518,13 +534,18 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']), len(event['maybe']))
 
+    users_result = zulip_client.get_users()
+    all_users = None
+    if users_result['result'] == 'success':
+      all_users = users_result['members']
+
     row_list = map(None, event['yes'], event['no'], event['maybe'])
 
     for row in row_list:
       confirmation_table += '{}|{}|{}\n'.format(
-        '' if row[0] is None else row[0],
-        '' if row[1] is None else row[1],
-        '' if row[2] is None else row[2]
+        '' if row[0] is None else convert_name_or_email_to_pingable_name(all_users, row[0]),
+        '' if row[1] is None else convert_name_or_email_to_pingable_name(all_users, row[1]),
+        '' if row[2] is None else convert_name_or_email_to_pingable_name(all_users, row[2])
       )
     else:
       confirmation_table += '\t|\t'
