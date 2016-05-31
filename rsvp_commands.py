@@ -125,8 +125,10 @@ class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
+    event_id = kwargs.pop('event_id')
+
     try:
-      cal_event = calendar_events.add_rsvpbot_event_to_gcal(event)
+      cal_event = calendar_events.add_rsvpbot_event_to_gcal(event, event_id)
     except calendar_events.KeyfilePathNotSpecifiedError:
       body = 'Oops! Adding to Calendar not currently supported.'
     except calendar_events.DateAndTimeNotSuppliedError:
@@ -337,7 +339,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     " Oh no!!",
   ]
 
-  def confirm(self, event, sender_email, decision):
+  def confirm(self, event, event_id, sender_email, decision):
     # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
     # all currently logged events have passed.
     if ('maybe' not in event.keys()):
@@ -355,18 +357,18 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
         event[response] = [value for value in event[response] if value != sender_email]
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
-        calendar_events.update_gcal_event(event)
+        calendar_events.update_gcal_event(event, event_id)
 
     return event
 
-  def attempt_confirm(self, event, sender_email, decision, limit):
+  def attempt_confirm(self, event, event_id, sender_email, decision, limit):
     if decision == 'yes' and limit:
       available_seats = limit - len(event['yes'])
       # In this case, we need to do some extra checking for the attendance limit.
       if (available_seats - 1 < 0):
         raise LimitReachedException()
 
-    return self.confirm(event, sender_email, decision)
+    return self.confirm(event, event_id, sender_email, decision)
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
@@ -385,7 +387,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
 
     try:
-      event = self.attempt_confirm(event, sender_email, decision, limit)
+      event = self.attempt_confirm(event, event_id,  sender_email, decision, limit)
 
       if sender_full_name in self.vips:
         if decision == 'yes':
@@ -442,7 +444,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
       body = strings.MSG_DATE_SET % (month, day, year)
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
-        calendar_events.update_gcal_event(event)
+        calendar_events.update_gcal_event(event, event_id)
     else:
       body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
 
@@ -462,7 +464,7 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
       body = strings.MSG_TIME_SET % (hours, minutes)
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
-        calendar_events.update_gcal_event(event)
+        calendar_events.update_gcal_event(event, event_id)
     else:
       body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
 
@@ -490,7 +492,7 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     event[attribute] = value
     calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
     if calendar_event_id:
-      calendar_events.update_gcal_event(event)
+      calendar_events.update_gcal_event(event, event_id)
 
     body = strings.MSG_STRING_ATTR_SET % (attribute, value)
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
