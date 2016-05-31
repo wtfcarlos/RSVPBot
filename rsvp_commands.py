@@ -111,11 +111,18 @@ class RSVPSetDurationCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
+    event_id = kwargs.pop('event_id')
     duration = kwargs.pop('duration')
 
     parsed_duration_in_seconds = timeparse(duration, granularity='minutes')
     event['duration'] = parsed_duration_in_seconds
     body = 'Duration set to %s' % datetime.timedelta(seconds=parsed_duration_in_seconds)
+    calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+    if calendar_event_id:
+      try:
+        calendar_events.update_gcal_event(event, event_id)
+      except calendar_events.KeyfilePathNotSpecifiedError:
+        pass
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
@@ -159,8 +166,8 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.\n"
     body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
     body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
-    body += "`rsvp set duration HH:mm or eg. 30m`|Sets the length of time this event will last (optional, only for adding the event to 455 Broadway Calendar).\n"
-    body += "`rsvp add to calendar`|Creates an event on the 455 Broadway Calendar. Requires time, date, and duration to be set first.\n"
+    body += "`rsvp set duration HH:mm or 30m`|Sets the length of time this event will last (optional, only required for adding the event to the Calendar).\n"
+    body += "`rsvp add to calendar`|Creates an event on the Calendar. Requires time, date, and duration to be set first.\n"
     body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
     body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
     body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
@@ -357,7 +364,10 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
         event[response] = [value for value in event[response] if value != sender_email]
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
-        calendar_events.update_gcal_event(event, event_id)
+        try:
+          calendar_events.update_gcal_event(event, event_id)
+        except calendar_events.KeyfilePathNotSpecifiedError:
+          pass
 
     return event
 
@@ -444,7 +454,10 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
       body = strings.MSG_DATE_SET % (month, day, year)
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
-        calendar_events.update_gcal_event(event, event_id)
+        try:
+          calendar_events.update_gcal_event(event, event_id)
+        except calendar_events.KeyfilePathNotSpecifiedError:
+          pass
     else:
       body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
 
@@ -464,7 +477,10 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
       body = strings.MSG_TIME_SET % (hours, minutes)
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
-        calendar_events.update_gcal_event(event, event_id)
+        try:
+          calendar_events.update_gcal_event(event, event_id)
+        except calendar_events.KeyfilePathNotSpecifiedError:
+          pass
     else:
       body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
 
@@ -492,8 +508,10 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     event[attribute] = value
     calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
     if calendar_event_id:
-      calendar_events.update_gcal_event(event, event_id)
-
+      try:
+        calendar_events.update_gcal_event(event, event_id)
+      except calendar_events.KeyfilePathNotSpecifiedError:
+        pass
     body = strings.MSG_STRING_ATTR_SET % (attribute, value)
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
