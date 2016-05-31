@@ -116,7 +116,7 @@ class RSVPSetDurationCommand(RSVPEventNeededCommand):
 
     parsed_duration_in_seconds = timeparse(duration, granularity='minutes')
     event['duration'] = parsed_duration_in_seconds
-    body = 'Duration set to %s' % datetime.timedelta(seconds=parsed_duration_in_seconds)
+    body = strings.MSG_DURATION_SET % datetime.timedelta(seconds=parsed_duration_in_seconds)
     calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
     if calendar_event_id:
       try:
@@ -137,16 +137,16 @@ class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
     try:
       cal_event = calendar_events.add_rsvpbot_event_to_gcal(event, event_id)
     except calendar_events.KeyfilePathNotSpecifiedError:
-      body = 'Oops! Adding to Calendar not currently supported.'
+      body = strings.ERROR_CALENDAR_ENVS_NOT_SET
     except calendar_events.DateAndTimeNotSuppliedError:
-      body = 'Oops! The `date` and `time` are required to add this to the calendar!'
+      body = strings.ERROR_DATE_AND_TIME_NOT_SET
     except calendar_events.DurationNotSuppliedError:
-      body = 'Oops! The event `duration` is required to add this to the calendar!'
+      body = strings.ERROR_DURATION_NOT_SET
     else:
       event['calendar_event'] = {}
       event['calendar_event']['id'] = cal_event.get('id')
       event['calendar_event']['html_link'] = cal_event.get('htmlLink')
-      body = 'Event [added to {calendar_name} Calendar]({url})!'.format(
+      body = strings.MSG_ADDED_TO_CALENDAR.format(
           calendar_name=cal_event.get('calendar_name'),
           url=cal_event.get('htmlLink'))
 

@@ -28,7 +28,7 @@ class CalendarEventTest(unittest.TestCase):
         }
 
         with self.assertRaises(calendar_events.DateAndTimeNotSuppliedError):
-            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event)
+            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
 
     def test_add_to_gcal_with_missing_time_throws_exception(self):
         rsvp_bot_event = {
@@ -46,7 +46,7 @@ class CalendarEventTest(unittest.TestCase):
         }
 
         with self.assertRaises(calendar_events.DateAndTimeNotSuppliedError):
-            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event)
+            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
 
     def test_add_to_gcal_with_missing_duration_throws_exception(self):
         rsvp_bot_event = {
@@ -64,7 +64,7 @@ class CalendarEventTest(unittest.TestCase):
         }
 
         with self.assertRaises(calendar_events.DurationNotSuppliedError):
-            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event)
+            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
 
     @patch('calendar_events.create_event_on_calendar')
     def test_add_to_gcal_with_complete_event_works(self, mock):
@@ -82,7 +82,7 @@ class CalendarEventTest(unittest.TestCase):
             u'limit': None,
         }
 
-        calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event)
+        calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
 
         event_dict = {
             'start': {
@@ -93,7 +93,7 @@ class CalendarEventTest(unittest.TestCase):
                 'dateTime': '2100-02-25T11:00:00'},
             'location': 'Hopper!',
             'summary': 'Testing',
-            'description': 'A very fun party',
+            'description': 'A very fun party\r\rFor more information or to RSVP, see https://zulip.com#narrow/stream/test/topic/test',
             'attendees': [],
         }
 
@@ -300,7 +300,7 @@ class RSVPTest(unittest.TestCase):
         output = self.issue_command('rsvp set duration 30m')
 
         self.assertIn(
-            'Duration set to 0:30:00',
+            'The duration for this event has been set to **0:30:00**!',
             output[0]['body']
         )
 
