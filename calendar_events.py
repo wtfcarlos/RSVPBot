@@ -1,5 +1,6 @@
 """Module to add and update events on GOOGLE_CALENDAR_ID."""
 import datetime
+import json
 import os
 import re
 
@@ -9,7 +10,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 from util import stream_topic_to_narrow_url
 
-GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', None)
 GOOGLE_CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID', None)
 
 
@@ -68,12 +68,18 @@ def update_event_on_calendar(event_id, event_dict, calendar_id):
 
 def _get_calendar_service():
     scopes = ['https://www.googleapis.com/auth/calendar']
-    path_to_keyfile = GOOGLE_APPLICATION_CREDENTIALS
-    if not path_to_keyfile:
-        raise KeyfilePathNotSpecifiedError
+    cred_details = os.getenv('GOOGLE_CREDENTIALS', None)
+    if cred_details is None:
+        raise CalendarEnvironmentVariablesNotDefined
+    creds = json.loads(cred_details)
+    google_pk = {'private_key': os.getenv('GOOGLE_PRIVATE_KEY')}
 
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        path_to_keyfile, scopes=scopes)
+    creds.update(google_pk)
+    if any([val is None for val in creds.values()]):
+        raise CalendarEnvironmentVariablesNotDefined
+
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(
+        creds, scopes=scopes)
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
 
@@ -147,5 +153,5 @@ class DateAndTimeNotSuppliedError(Exception):
     pass
 
 
-class KeyfilePathNotSpecifiedError(Exception):
+class CalendarEnvironmentVariablesNotDefined(Exception):
     pass
