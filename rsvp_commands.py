@@ -4,6 +4,9 @@ import re
 import datetime
 import random
 
+from pytimeparse.timeparse import timeparse
+
+import calendar_events
 import strings
 import util
 
@@ -49,7 +52,7 @@ class RSVPCommand(object):
     self.regex = self.prefix + self.regex
 
   def match(self, input_str):
-    return re.match(self.regex, input_str, flags=re.DOTALL|re.I)
+    return re.match(self.regex, input_str, flags=re.DOTALL | re.I)
 
   def execute(self, events, *args, **kwargs):
     """execute() is just a convenience wrapper around __run()."""
@@ -93,12 +96,61 @@ class RSVPInitCommand(RSVPCommand):
             'time': None,
             'limit': None,
             'date': '%s' % datetime.date.today(),
+            'calendar_event': None,
+            'duration': None,
           }
         }
       )
 
     response = RSVPCommandResponse(events, RSVPMessage('stream', body))
     return response
+
+
+class RSVPSetDurationCommand(RSVPEventNeededCommand):
+  regex = r'set duration (?P<duration>.+)$'
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+    event_id = kwargs.pop('event_id')
+    duration = kwargs.pop('duration')
+
+    parsed_duration_in_seconds = timeparse(duration, granularity='minutes')
+    event['duration'] = parsed_duration_in_seconds
+    body = strings.MSG_DURATION_SET % datetime.timedelta(seconds=parsed_duration_in_seconds)
+    calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+    if calendar_event_id:
+      try:
+        calendar_events.update_gcal_event(event, event_id)
+      except calendar_events.KeyfilePathNotSpecifiedError:
+        pass
+
+    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+
+
+class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
+  regex = r'add to calendar$'
+
+  def run(self, events, *args, **kwargs):
+    event = kwargs.pop('event')
+    event_id = kwargs.pop('event_id')
+
+    try:
+      cal_event = calendar_events.add_rsvpbot_event_to_gcal(event, event_id)
+    except calendar_events.KeyfilePathNotSpecifiedError:
+      body = strings.ERROR_CALENDAR_ENVS_NOT_SET
+    except calendar_events.DateAndTimeNotSuppliedError:
+      body = strings.ERROR_DATE_AND_TIME_NOT_SET
+    except calendar_events.DurationNotSuppliedError:
+      body = strings.ERROR_DURATION_NOT_SET
+    else:
+      event['calendar_event'] = {}
+      event['calendar_event']['id'] = cal_event.get('id')
+      event['calendar_event']['html_link'] = cal_event.get('htmlLink')
+      body = strings.MSG_ADDED_TO_CALENDAR.format(
+          calendar_name=cal_event.get('calendar_name'),
+          url=cal_event.get('htmlLink'))
+
+    return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
 
 class RSVPHelpCommand(RSVPCommand):
@@ -114,6 +166,8 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.\n"
     body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
     body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
+    body += "`rsvp set duration HH:mm or 30m`|Sets the length of time this event will last (optional, only required for adding the event to the Calendar).\n"
+    body += "`rsvp add to calendar`|Creates an event on the Calendar. Requires time, date, and duration to be set first.\n"
     body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
     body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
     body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
@@ -292,7 +346,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     " Oh no!!",
   ]
 
-  def confirm(self, event, sender_email, decision):
+  def confirm(self, event, event_id, sender_email, decision):
     # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
     # all currently logged events have passed.
     if ('maybe' not in event.keys()):
@@ -308,17 +362,23 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       # else, remove all instances of them from other response lists.
       elif sender_email in event[response]:
         event[response] = [value for value in event[response] if value != sender_email]
+      calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+      if calendar_event_id:
+        try:
+          calendar_events.update_gcal_event(event, event_id)
+        except calendar_events.KeyfilePathNotSpecifiedError:
+          pass
 
     return event
 
-  def attempt_confirm(self, event, sender_email, decision, limit):
+  def attempt_confirm(self, event, event_id, sender_email, decision, limit):
     if decision == 'yes' and limit:
       available_seats = limit - len(event['yes'])
       # In this case, we need to do some extra checking for the attendance limit.
       if (available_seats - 1 < 0):
         raise LimitReachedException()
 
-    return self.confirm(event, sender_email, decision)
+    return self.confirm(event, event_id, sender_email, decision)
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
@@ -337,7 +397,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
 
     try:
-      event = self.attempt_confirm(event, sender_email, decision, limit)
+      event = self.attempt_confirm(event, event_id,  sender_email, decision, limit)
 
       if sender_full_name in self.vips:
         if decision == 'yes':
@@ -392,6 +452,12 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
       event['date'] = str(datetime.date(year, month, day))
       events[event_id] = event
       body = strings.MSG_DATE_SET % (month, day, year)
+      calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+      if calendar_event_id:
+        try:
+          calendar_events.update_gcal_event(event, event_id)
+        except calendar_events.KeyfilePathNotSpecifiedError:
+          pass
     else:
       body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
 
@@ -406,8 +472,15 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
     hours, minutes = int(kwargs.pop('hours')), int(kwargs.pop('minutes'))
 
     if hours in range(0, 24) and minutes in range(0, 60):
-      events[event_id]['time'] = '%02d:%02d' % (hours, minutes)
+      event = events[event_id]
+      event['time'] = '%02d:%02d' % (hours, minutes)
       body = strings.MSG_TIME_SET % (hours, minutes)
+      calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+      if calendar_event_id:
+        try:
+          calendar_events.update_gcal_event(event, event_id)
+        except calendar_events.KeyfilePathNotSpecifiedError:
+          pass
     else:
       body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
 
@@ -431,8 +504,14 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     attribute = kwargs.pop('attribute')
     value = kwargs.pop('value')
 
-    events[event_id][attribute] = value
-
+    event = events[event_id]
+    event[attribute] = value
+    calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
+    if calendar_event_id:
+      try:
+        calendar_events.update_gcal_event(event, event_id)
+      except calendar_events.KeyfilePathNotSpecifiedError:
+        pass
     body = strings.MSG_STRING_ATTR_SET % (attribute, value)
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
@@ -499,6 +578,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
       "Pris Nasrat (SP2'16)",
       "Benjamin Gilbert (F2'15)",
       "Andrew Drozdov (SP1'15)",
+      "Alex Wilson (S1'16)",
     ]
 
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]

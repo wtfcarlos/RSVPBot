@@ -5,12 +5,102 @@ import unittest
 
 from mock import patch
 
+import calendar_events
 import rsvp
 import rsvp_commands
 
 
-def testRSVP():
-    return rsvp.RSVP(filename='test.json')
+class CalendarEventTest(unittest.TestCase):
+
+    def test_add_to_gcal_with_missing_date_throws_exception(self):
+        rsvp_bot_event = {
+            u'name': 'Testing',
+            u'description': 'A very fun party',
+            u'date': None,
+            u'time': u'10:30',
+            u'duration': 1800,
+            u'place': 'Hopper!',
+            u'calendar_event': None,
+            u'yes': [],
+            u'no': [],
+            u'maybe': [],
+            u'limit': None,
+        }
+
+        with self.assertRaises(calendar_events.DateAndTimeNotSuppliedError):
+            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
+
+    def test_add_to_gcal_with_missing_time_throws_exception(self):
+        rsvp_bot_event = {
+            u'name': 'Testing',
+            u'description': 'A very fun party',
+            u'date': '2100-02-25',
+            u'time': None,
+            u'duration': 1800,
+            u'place': 'Hopper!',
+            u'calendar_event': None,
+            u'yes': [],
+            u'no': [],
+            u'maybe': [],
+            u'limit': None,
+        }
+
+        with self.assertRaises(calendar_events.DateAndTimeNotSuppliedError):
+            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
+
+    def test_add_to_gcal_with_missing_duration_throws_exception(self):
+        rsvp_bot_event = {
+            u'name': 'Testing',
+            u'description': 'A very fun party',
+            u'date': '2100-02-25',
+            u'time': u'10:30',
+            u'duration': None,
+            u'place': 'Hopper!',
+            u'calendar_event': None,
+            u'yes': [],
+            u'no': [],
+            u'maybe': [],
+            u'limit': None,
+        }
+
+        with self.assertRaises(calendar_events.DurationNotSuppliedError):
+            calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
+
+    @patch('calendar_events.create_event_on_calendar')
+    def test_add_to_gcal_with_complete_event_works(self, mock):
+        rsvp_bot_event = {
+            u'name': 'Testing',
+            u'description': 'A very fun party',
+            u'date': '2100-02-25',
+            u'time': u'10:30',
+            u'duration': 1800,
+            u'place': 'Hopper!',
+            u'calendar_event': None,
+            u'yes': [],
+            u'no': [],
+            u'maybe': [],
+            u'limit': None,
+        }
+
+        calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
+
+        event_dict = {
+            'start': {
+                'timeZone': 'America/New_York',
+                'dateTime': '2100-02-25T10:30:00'},
+            'end': {
+                'timeZone': 'America/New_York',
+                'dateTime': '2100-02-25T11:00:00'},
+            'location': 'Hopper!',
+            'summary': 'Testing',
+            'description': 'A very fun party\r\rFor more information or to RSVP, see https://zulip.com#narrow/stream/test/topic/test',
+            'attendees': [],
+        }
+
+        mock.assert_called_once_with(
+            event_dict,
+            calendar_events.GOOGLE_CALENDAR_ID,
+        )
 
 
 class RSVPTest(unittest.TestCase):
@@ -26,7 +116,16 @@ class RSVPTest(unittest.TestCase):
         except OSError:
             pass
 
-    def create_input_message(self, content='', sender_full_name='Tester', subject='Testing', display_recipient='test-stream', sender_id='12345', message_type='stream', sender_email='a@example.com'):
+    def create_input_message(
+            self,
+            content='',
+            sender_full_name='Tester',
+            subject='Testing',
+            display_recipient='test-stream',
+            sender_id='12345',
+            message_type='stream',
+            sender_email='a@example.com'):
+
         return {
             'content': content,
             'subject': subject,
@@ -196,6 +295,40 @@ class RSVPTest(unittest.TestCase):
         output = self.issue_custom_command('rsvp yes', sender_full_name='Tester 2')
 
         self.assertIn('The **limit** for this event has been reached!', output[0]['body'])
+
+    def test_set_duration(self):
+        output = self.issue_command('rsvp set duration 30m')
+
+        self.assertIn(
+            'The duration for this event has been set to **0:30:00**!',
+            output[0]['body']
+        )
+
+    def test_create_calendar_event_without_required_params_returns_error_message(self):
+        ouput = self.issue_command('rsvp add to calendar')
+
+        self.assertIn(
+            "Oops! The `date` and `time` are required to add this to the calendar!",
+            ouput[0]['body'])
+
+    @patch('calendar_events.create_event_on_calendar')
+    def test_create_calendar_event_with_params_returns_success_message(self, mock):
+        self.issue_command('rsvp set date 02/25/2100')
+        self.issue_command('rsvp set time 10:30')
+        self.issue_command('rsvp set place Hopper!')
+        self.issue_command('rsvp set duration 30m')
+
+        mock.return_value = {
+            'id': 1, 'htmlLink': 'www.google.com',
+            'calendar_name': 'Test'
+        }
+
+        output = self.issue_command('rsvp add to calendar')
+
+        self.assertIn(
+            'Event [added to Test Calendar](www.google.com)!',
+            output[0]['body']
+        )
 
     def test_set_date(self):
         output = self.issue_command('rsvp set date 02/25/2100')
