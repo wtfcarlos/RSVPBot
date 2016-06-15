@@ -121,7 +121,7 @@ class RSVPSetDurationCommand(RSVPEventNeededCommand):
     if calendar_event_id:
       try:
         calendar_events.update_gcal_event(event, event_id)
-      except calendar_events.KeyfilePathNotSpecifiedError:
+      except calendar_events.CalendarEnvironmentVariablesNotDefined:
         pass
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
@@ -136,7 +136,7 @@ class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
 
     try:
       cal_event = calendar_events.add_rsvpbot_event_to_gcal(event, event_id)
-    except calendar_events.KeyfilePathNotSpecifiedError:
+    except calendar_events.CalendarEnvironmentVariablesNotDefined:
       body = strings.ERROR_CALENDAR_ENVS_NOT_SET
     except calendar_events.DateAndTimeNotSuppliedError:
       body = strings.ERROR_DATE_AND_TIME_NOT_SET
@@ -366,7 +366,7 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
       if calendar_event_id:
         try:
           calendar_events.update_gcal_event(event, event_id)
-        except calendar_events.KeyfilePathNotSpecifiedError:
+        except calendar_events.CalendarEnvironmentVariablesNotDefined:
           pass
 
     return event
@@ -456,7 +456,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
       if calendar_event_id:
         try:
           calendar_events.update_gcal_event(event, event_id)
-        except calendar_events.KeyfilePathNotSpecifiedError:
+        except calendar_events.CalendarEnvironmentVariablesNotDefined:
           pass
     else:
       body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
@@ -479,7 +479,7 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
       if calendar_event_id:
         try:
           calendar_events.update_gcal_event(event, event_id)
-        except calendar_events.KeyfilePathNotSpecifiedError:
+        except calendar_events.CalendarEnvironmentVariablesNotDefined:
           pass
     else:
       body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
@@ -510,7 +510,7 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     if calendar_event_id:
       try:
         calendar_events.update_gcal_event(event, event_id)
-      except calendar_events.KeyfilePathNotSpecifiedError:
+      except calendar_events.CalendarEnvironmentVariablesNotDefined:
         pass
     body = strings.MSG_STRING_ATTR_SET % (attribute, value)
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
