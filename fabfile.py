@@ -9,4 +9,5 @@ def deploy():
 	code_dir = '/home/django/RSVPBot'
 	with cd(code_dir):
 		run('git pull')
+        run('pip install -r requirements.txt')
 		run('sudo service rsvp restart')
