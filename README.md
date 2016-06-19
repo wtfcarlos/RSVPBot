@@ -24,20 +24,8 @@ export ZULIP_RSVP_KEY="<bot-key>"
 # Optional
 export ZULIP_RSVP_SITE="https://your-zulip-site.com"  # default is https://zulip.com
 export ZULIP_KEY_WORD="rsvp"                          # default is rsvp
-
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/file" # default is None
 export GOOGLE_CALENDAR_ID="abd123@group.calendar.com" # default is None
-
-# this is a json dump of all but the private key from the downloaded google credentials
-export GOOGLE_CREDENTIALS='{"client_x509_cert_url": "xxx", "auth_uri": "xxx", "client_email": "xxx@email.com", "private_key_id": "xxx", "client_id": "xxx", "token_uri": "xxx", "project_id": "xxx", "type": "service_account", "auth_provider_x509_cert_url": "xxx"}'
-
-# the private key from the downloaded google creds.
-# Note: this must be entered on multiple lines, rather than one line with \n line breaks.
-export GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-sfsjkdfsjhjfhjshajfhsjhfjdskahfjldahsjflhasjflhjslhfjslafhjklsax
-fjdkslfjksdljfasdfhjsalhjflhjsdlahfjdlasfhjlahjfkldahjfklhjksdjd
-jakflsfdsajklsdfslslskx=
------END PRIVATE KEY-----
-"
 ```
 
 ## Running
