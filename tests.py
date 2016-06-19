@@ -156,6 +156,11 @@ class RSVPTest(unittest.TestCase):
 
         self.assertIn('is already an RSVPBot event', output[0]['body'])
 
+    def test_rsvp_help_replies_privately(self):
+        output = self.issue_command('rsvp help')
+        self.assertEqual(output[0]['display_recipient'], 'a@example.com')
+        self.assertEqual(output[0]['type'], 'private')
+
     def test_event_cancel(self):
         output = self.issue_command('rsvp cancel')
 
