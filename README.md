@@ -11,6 +11,7 @@ People can then use simple commands to rsvp to an event, set the hour, time, pla
 * Write tests for any new command or feature introduced
 * Make sure the requirements.txt file is kept up to date
 * Make sure any new messages that the bot sends publicly or privately follow the [RC Social Rules](https://www.recurse.com/manual#sub-sec-social-rules). It takes a village, people!
+* New features are TOTALLY AWESOME, but RSVPBot has a few [open issues](https://github.com/kokeshii/RSVPBot/issues) you can take a look at if you want to get familiarized with the code or you're looking for ideas on how to contribute.
 * HAVE FUN PEOPLE YAY
 
 ## Environment Variables
