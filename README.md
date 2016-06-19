@@ -10,6 +10,7 @@ People can then use simple commands to rsvp to an event, set the hour, time, pla
 * Make your pull requests to the `dev` branch
 * Write tests for any new command or feature introduced
 * Make sure the requirements.txt file is kept up to date
+* Make sure any new messages that the bot sends publicly or privately follow the [RC Social Rules](https://www.recurse.com/manual#sub-sec-social-rules). It takes a village, people!
 * HAVE FUN PEOPLE YAY
 
 ## Environment Variables
