@@ -66,7 +66,7 @@ class RSVP(object):
     replies = self.route(message)
     messages = []
 
-    for idx, reply in enumerate(replies):
+    for reply in replies:
       # only reply via PM to incoming PMs
       if message['type'] == 'private':
         reply.type = 'private'
