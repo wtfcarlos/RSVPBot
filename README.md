@@ -5,6 +5,12 @@ RSVPBot
 This is a simple Zulip bot that converts a Zulip conversation into an event context.
 People can then use simple commands to rsvp to an event, set the hour, time, place, and easily ping every person who RSVP'ed.
 
+## Contributing
+
+* Make your pull requests to the `dev` branch
+* Write tests for any new command or feature introduced
+* Make sure the requirements.txt file is kept up to date
+* HAVE FUN PEOPLE YAY
 
 ## Environment Variables
 
