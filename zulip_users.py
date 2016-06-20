@@ -18,11 +18,11 @@ class ZulipUsers(object):
     def __init__(self, filename='zulip_users.json'):
         self.filename = filename
 
-        with open(self.filename, 'r') as users_file:
-            try:
+        try:
+            with open(self.filename, 'r') as users_file:
                 self.zulip_users = json.load(users_file)
-            except ValueError:
-                self.zulip_users = {}
+        except (IOError, ValueError):
+            self.zulip_users = {}
 
     def save(self):
         """Write the whole users dictionary to the filename file."""
