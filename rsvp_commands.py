@@ -9,6 +9,7 @@ from pytimeparse.timeparse import timeparse
 import calendar_events
 import strings
 import util
+from zulip_users import ZulipUsers
 
 
 class RSVPMessage(object):
@@ -457,49 +458,33 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
 
-def get_all_users_from_zulip_client(zulip_client=None):
-    all_users = None
-    if zulip_client:
-        users_result = zulip_client.get_users()
-        if users_result['result'] == 'success':
-            all_users = users_result['members']
-    return all_users
-
-
 class RSVPPingCommand(RSVPEventNeededCommand):
   regex = r'^({key_word} ping)$|({key_word} ping (?P<message>.+))$'
 
   def __init__(self, prefix, *args, **kwargs):
     self.regex = self.regex.format(key_word=prefix)
 
+  def get_users_dict(self):
+    return ZulipUsers()
+
   def run(self, events, *args, **kwargs):
-    zulip_client = args[0]
+    users = self.get_users_dict()
 
     event = kwargs.pop('event')
     message = kwargs.get('message')
 
     body = "**Pinging all participants who RSVP'd!!**\n"
 
-    all_users = get_all_users_from_zulip_client(zulip_client)
-
     for participant in event['yes']:
-      body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
+      body += "@**%s** " % users.convert_email_to_pingable_name(participant)
 
     for participant in event['maybe']:
-      body += "@**%s** " % convert_name_or_email_to_pingable_name(all_users, participant)
+      body += "@**%s** " % users.convert_email_to_pingable_name(participant)
 
     if message:
       body += ('\n' + message)
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
-
-
-def convert_name_or_email_to_pingable_name(all_users, name_or_email):
-  if all_users:
-    for user in all_users:
-      if user['email'] == name_or_email:
-        return user['full_name']
-  return name_or_email
 
 
 class RSVPCreditsCommand(RSVPEventNeededCommand):
@@ -539,9 +524,12 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 class RSVPSummaryCommand(RSVPEventNeededCommand):
   regex = r'(summary$|status$)'
 
+  def get_users_dict(self):
+    return ZulipUsers()
+
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
-    zulip_client = args[0]
+    users = self.get_users_dict()
 
     limit_str = 'No Limit!'
 
@@ -562,15 +550,13 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     confirmation_table = confirmation_table.format(len(event['yes']), len(event['no']), len(event['maybe']))
 
-    all_users = get_all_users_from_zulip_client(zulip_client)
-
     row_list = map(None, event['yes'], event['no'], event['maybe'])
 
     for row in row_list:
       confirmation_table += '{}|{}|{}\n'.format(
-        '' if row[0] is None else convert_name_or_email_to_pingable_name(all_users, row[0]),
-        '' if row[1] is None else convert_name_or_email_to_pingable_name(all_users, row[1]),
-        '' if row[2] is None else convert_name_or_email_to_pingable_name(all_users, row[2])
+        '' if row[0] is None else users.convert_email_to_pingable_name(row[0]),
+        '' if row[1] is None else users.convert_email_to_pingable_name(row[1]),
+        '' if row[2] is None else users.convert_email_to_pingable_name(row[2])
       )
     else:
       confirmation_table += '\t|\t'

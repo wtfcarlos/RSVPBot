@@ -3,11 +3,12 @@ import datetime
 import os
 import unittest
 
-from mock import patch
+from mock import Mock, patch
 
 import calendar_events
 import rsvp
 import rsvp_commands
+from zulip_users import ZulipUsers
 
 
 class CalendarEventTest(unittest.TestCase):
@@ -106,7 +107,7 @@ class CalendarEventTest(unittest.TestCase):
 class RSVPTest(unittest.TestCase):
 
     def setUp(self):
-        self.rsvp = rsvp.RSVP('rsvp', None, filename='test.json')
+        self.rsvp = rsvp.RSVP('rsvp', filename='test.json')
         self.issue_command('rsvp init')
         self.event = self.get_test_event()
 
@@ -480,15 +481,15 @@ class RSVPTest(unittest.TestCase):
                 sender_email=sender_email
             )
 
-        zulip_api_response = [
-            {'full_name': name, 'email': email}
-            for (_, name, email) in users
-        ]
+        users_dict = {email: name for (_, name, email) in users}
 
         # no actual zulip_client in tests, so we have to mock the response
-        with patch.object(rsvp_commands,
-                          'get_all_users_from_zulip_client',
-                          return_value=zulip_api_response):
+        return_val = ZulipUsers('test_users_file.json')
+        return_val.zulip_users = users_dict
+
+        with patch.object(rsvp_commands.RSVPPingCommand,
+                          'get_users_dict',
+                          return_value=return_val):
 
             output = self.issue_command('rsvp ping')
 
@@ -512,10 +513,14 @@ class RSVPTest(unittest.TestCase):
     def test_ping_message(self):
         self.issue_custom_command('rsvp yes', sender_full_name='A', sender_email='a@example.com')
 
-        # no actual zulip_client in tests, so we have to mock the response
-        with patch.object(rsvp_commands,
-                          'get_all_users_from_zulip_client',
-                          return_value=[{'full_name': 'A', 'email': 'a@example.com'}]):
+        users_dict = {'a@example.com': 'A'}
+
+        return_val = ZulipUsers('test_users_file.json')
+        return_val.zulip_users = users_dict
+
+        with patch.object(rsvp_commands.RSVPPingCommand,
+                          'get_users_dict',
+                          return_value=return_val):
 
             output = self.issue_command('rsvp ping message!!!')
 
@@ -530,10 +535,16 @@ class RSVPTest(unittest.TestCase):
 
     def test_rsvp_ping_with_yes(self):
         self.issue_custom_command('rsvp yes', sender_full_name='B', sender_email='b@example.com')
-        with patch.object(rsvp_commands,
-                          'get_all_users_from_zulip_client',
-                          return_value=[{'full_name': 'B', 'email': 'b@example.com'}]):
+        users_dict = {'b@example.com': 'B'}
+
+        return_val = ZulipUsers('test_users_file.json')
+        return_val.zulip_users = users_dict
+
+        with patch.object(rsvp_commands.RSVPPingCommand,
+                          'get_users_dict',
+                          return_value=return_val):
             output = self.issue_command('rsvp ping we\'re all going to the yes concert')
+
         self.assertEqual(None, self.event['limit'])
         self.assertNotIn('@**Tester** is attending!', output[0]['body'])
         self.assertNotIn('a@example.com', self.event['yes'])
