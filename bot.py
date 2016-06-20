@@ -4,6 +4,7 @@ import os
 import zulip
 
 import rsvp
+import zulip_users
 
 
 class Bot():
@@ -41,6 +42,12 @@ class Bot():
         """Subscribes to zulip streams."""
         self.client.add_subscriptions(self.streams)
 
+    def process(self, event):
+        if event['type'] == 'realm_user':
+            zulip_users.update_zulip_user_dict(event['person'], self.client)
+        elif event['type'] == 'message':
+            self.respond(event['message'])
+
     def respond(self, message):
         """Now we have an event dict, we should analyze it completely."""
 
@@ -65,7 +72,7 @@ class Bot():
 
     def main(self):
         """Blocking call that runs forever. Calls self.respond() on every event received."""
-        self.client.call_on_each_message(self.respond)
+        self.client.call_on_each_event(self.process, ['message', 'realm_user'])
 
 
 """ The Customization Part!
