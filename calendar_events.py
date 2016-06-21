@@ -88,7 +88,9 @@ def _format_rsvpbot_event_for_gcal(rsvpbot_event, event_id):
     location = rsvpbot_event.get('place')
     description = rsvpbot_event.get('description') or ''
 
-    stream, topic = event_id.split('/')
+    event_id_parts = event_id.split('/')
+    stream = event_id_parts[0]
+    topic = '/'.join(event_id_parts[1:])
     description += '\r\rFor more information or to RSVP, see {zulip_url}'.format(
         zulip_url=stream_topic_to_narrow_url(stream, topic))
 

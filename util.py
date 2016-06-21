@@ -20,8 +20,8 @@ def narrow_url_to_stream_topic(url):
 
 
 def stream_topic_to_narrow_url(stream, topic):
-    quoted_stream = urllib.quote(stream)
-    quoted_topic = urllib.quote(topic)
+    quoted_stream = urllib.quote(stream, '.')
+    quoted_topic = urllib.quote(topic, '.')
     fragment = ("#narrow/stream/%s/topic/%s") % (quoted_stream, quoted_topic)
 
     zulipped_fragment = fragment.replace('%', '.')
