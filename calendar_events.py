@@ -115,12 +115,12 @@ def _format_rsvpbot_event_for_gcal(rsvpbot_event, event_id):
     email_regex = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
     rsvp_yes_attendee_list = [
-        {'email': entity, 'response_status': 'accepted'} for entity in rsvpbot_event['yes']
+        {'email': entity, 'responseStatus': 'accepted'} for entity in rsvpbot_event['yes']
         if email_regex.match(entity)
     ]
 
     rsvp_maybe_attendee_list = [
-        {'email': entity, 'response_status': 'tentative'} for entity in rsvpbot_event['maybe']
+        {'email': entity, 'responseStatus': 'tentative'} for entity in rsvpbot_event['maybe']
         if email_regex.match(entity)
     ]
 
