@@ -2,9 +2,9 @@
 import os
 
 import zulip
-import requests
 
 import rsvp
+import zulip_users
 
 
 class Bot():
@@ -13,15 +13,12 @@ class Bot():
         it then posts a caption and a randomly selected gif in response to zulip messages.
      """
     def __init__(self, zulip_username, zulip_api_key, key_word, subscribed_streams=None, zulip_site=None):
-        self.username = zulip_username
-        self.api_key = zulip_api_key
-        self.site = zulip_site
         self.key_word = key_word.lower()
         self.subscribed_streams = subscribed_streams or []
         self.client = zulip.Client(zulip_username, zulip_api_key, site=zulip_site)
         self.client._register('get_users', method='GET', url='users')
         self.subscriptions = self.subscribe_to_streams()
-        self.rsvp = rsvp.RSVP(key_word, self.client)
+        self.rsvp = rsvp.RSVP(key_word)
 
     @property
     def streams(self):
@@ -35,17 +32,21 @@ class Bot():
 
     def get_all_zulip_streams(self):
         """Call Zulip API to get a list of all streams."""
-        response = requests.get(self.client.base_url + 'v1/streams', auth=(self.username, self.api_key))
-        if response.status_code == 200:
-            return response.json()['streams']
-        elif response.status_code == 401:
-            raise RuntimeError('check yo auth')
+        response = self.client.get_streams()
+        if response['result'] == 'success':
+            return response['streams']
         else:
-            raise RuntimeError(':( we failed to GET streams.\n(%s)' % response)
+            raise RuntimeError('check yo auth')
 
     def subscribe_to_streams(self):
         """Subscribes to zulip streams."""
         self.client.add_subscriptions(self.streams)
+
+    def process(self, event):
+        if event['type'] == 'realm_user':
+            zulip_users.update_zulip_user_dict(event['person'], self.client)
+        elif event['type'] == 'message':
+            self.respond(event['message'])
 
     def respond(self, message):
         """Now we have an event dict, we should analyze it completely."""
@@ -71,7 +72,7 @@ class Bot():
 
     def main(self):
         """Blocking call that runs forever. Calls self.respond() on every event received."""
-        self.client.call_on_each_message(self.respond)
+        self.client.call_on_each_event(self.process, ['message', 'realm_user'])
 
 
 """ The Customization Part!

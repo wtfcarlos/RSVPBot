@@ -8,7 +8,7 @@ from strings import ERROR_INVALID_COMMAND
 
 class RSVP(object):
 
-  def __init__(self, key_word, zulip_client, filename='events.json'):
+  def __init__(self, key_word, filename='events.json'):
     """
     When created, this instance will try to open self.filename. It will always
     keep a copy in memory of the whole events dictionary and commit it when necessary.
@@ -34,7 +34,6 @@ class RSVP(object):
       # This needs to be at last for fuzzy yes|no checking
       rsvp_commands.RSVPConfirmCommand(key_word)
     )
-    self.zulip_client = zulip_client
 
     try:
       with open(self.filename, "r") as f:
@@ -118,7 +117,7 @@ class RSVP(object):
           if matches.groupdict():
             kwargs.update(matches.groupdict())
 
-          response = command.execute(self.events, self.zulip_client, **kwargs)
+          response = command.execute(self.events, **kwargs)
 
           # Allow for a single events object but multiple messaages to send
           self.events = response.events
