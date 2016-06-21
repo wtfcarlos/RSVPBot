@@ -67,6 +67,44 @@ class CalendarEventTest(unittest.TestCase):
             calendar_events.add_rsvpbot_event_to_gcal(rsvp_bot_event, 'test/test')
 
     @patch('calendar_events.create_event_on_calendar')
+    def test_add_to_calendar_with_slash_in_topic_works(self, mock):
+        rsvp_bot_event = {
+            u'name': 'Testing',
+            u'description': 'A very fun party',
+            u'date': '2100-02-25',
+            u'time': u'10:30',
+            u'duration': 1800,
+            u'place': 'Hopper!',
+            u'calendar_event': None,
+            u'yes': [],
+            u'no': [],
+            u'maybe': [],
+            u'limit': None,
+        }
+
+        calendar_events.add_rsvpbot_event_to_gcal(
+            rsvp_bot_event,
+            '455 Broadway/Practical web app security 6/22')
+
+        event_dict = {
+            'start': {
+                'timeZone': 'America/New_York',
+                'dateTime': '2100-02-25T10:30:00'},
+            'end': {
+                'timeZone': 'America/New_York',
+                'dateTime': '2100-02-25T11:00:00'},
+            'location': 'Hopper!',
+            'summary': 'Testing',
+            'description': 'A very fun party\r\rFor more information or to RSVP, see https://zulip.com#narrow/stream/455.20Broadway/topic/Practical.20web.20app.20security.206.2F22',
+            'attendees': [],
+        }
+
+        mock.assert_called_once_with(
+            event_dict,
+            calendar_events.GOOGLE_CALENDAR_ID,
+        )
+
+    @patch('calendar_events.create_event_on_calendar')
     def test_add_to_gcal_with_complete_event_works(self, mock):
         rsvp_bot_event = {
             u'name': 'Testing',
