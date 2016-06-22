@@ -553,27 +553,27 @@ class RSVPPlaceTest(RSVPTest):
 
 
 class RSVPSummaryTest(RSVPTest):
-    def test_summary_shows_NA_for_place_not_set(self):
+    def test_summary_shows_place(self):
+        self.issue_command('rsvp set place Hopper!')
         output = self.issue_command('rsvp summary')
-        self.assertIn('**Where**|N/A', output[0]['body'])
+        self.assertIn('**Where**|Hopper!', output[0]['body'])
 
-    def test_summary_whos_NA_for_description_not_set(self):
+    def test_summary_does_not_include_place_if_place_not_set(self):
         output = self.issue_command('rsvp summary')
-        self.assertIn('**What**|N/A', output[0]['body'])
-
-    def test_summary_shows_allday_for_allday_event(self):
-        output = self.issue_command('rsvp summary')
-        self.assertIn('(All day)', output[0]['body'])
+        self.assertNotIn('**Where**', output[0]['body'])
 
     def test_summary_shows_description(self):
         self.issue_command('rsvp set description test description')
         output = self.issue_command('rsvp summary')
         self.assertIn('**What**|test description', output[0]['body'])
 
-    def test_summary_shows_place(self):
-        self.issue_command('rsvp set place Hopper!')
+    def test_summary_does_not_include_what_section_if_description_not_set(self):
         output = self.issue_command('rsvp summary')
-        self.assertIn('**Where**|Hopper!', output[0]['body'])
+        self.assertNotIn('**What**', output[0]['body'])
+
+    def test_summary_shows_allday_for_allday_event(self):
+        output = self.issue_command('rsvp summary')
+        self.assertIn('(All day)', output[0]['body'])
 
     def test_summary_shows_date(self):
         self.issue_command('rsvp set date 02/25/2100')
@@ -585,9 +585,9 @@ class RSVPSummaryTest(RSVPTest):
         output = self.issue_command('rsvp summary')
         self.assertIn('**Limit**|1/1', output[0]['body'])
 
-    def test_summary_shows_no_limit_on_limit_not_set(self):
+    def test_summary_does_not_shows_limit_if_limit_not_set(self):
         output = self.issue_command('rsvp summary')
-        self.assertIn('**Limit**|No Limit!', output[0]['body'])
+        self.assertNotIn('**Limit**', output[0]['body'])
 
     def test_summary_shows_time(self):
         self.issue_command('rsvp set time 10:30')
