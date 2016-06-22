@@ -541,6 +541,9 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     summary_table += '**When**|%s @ %s\n' % (event['date'], event['time'] or '(All day)')
 
+    if event['duration']:
+        summary_table += '**Duration**|%s\n' % datetime.timedelta(seconds=event['duration'])
+
     if event['place']:
         summary_table += '**Where**|%s\n' % event['place']
 

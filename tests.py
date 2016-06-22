@@ -553,6 +553,15 @@ class RSVPPlaceTest(RSVPTest):
 
 
 class RSVPSummaryTest(RSVPTest):
+    def test_summary_shows_duration(self):
+        self.issue_command('rsvp set duration 1h')
+        output = self.issue_command('rsvp summary')
+        self.assertIn('**Duration**|1:00:00', output[0]['body'])
+
+    def test_summary_does_not_include_duration_if_duration_not_set(self):
+        output = self.issue_command('rsvp summary')
+        self.assertNotIn('**Duration**', output[0]['body'])
+
     def test_summary_shows_place(self):
         self.issue_command('rsvp set place Hopper!')
         output = self.issue_command('rsvp summary')
