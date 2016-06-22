@@ -61,7 +61,7 @@ class Bot():
         """Sends a message to zulip stream or user."""
         msg_to = msg['display_recipient']
         if msg['type'] == 'private':
-            msg_to = msg['sender_email']
+            msg_to = msg.get('sender_email') or msg_to
 
         self.client.send_message({
             "type": msg['type'],

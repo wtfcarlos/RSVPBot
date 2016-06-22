@@ -158,6 +158,8 @@ class RSVPHelpCommand(RSVPCommand):
   regex = r'help$'
 
   def run(self, events, *args, **kwargs):
+    sender_email = kwargs.pop('sender_email')
+
     body = "**Command**|**Description**\n"
     body += "--- | ---\n"
     body += "**`rsvp yes`**|Marks **you** as attending this event.\n"
@@ -177,7 +179,7 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n"
     body += "`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.\n"
 
-    return RSVPCommandResponse(events, RSVPMessage('private', body))
+    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
 
 class RSVPCancelCommand(RSVPEventNeededCommand):
