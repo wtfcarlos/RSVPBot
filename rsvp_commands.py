@@ -533,20 +533,23 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
     event = kwargs.pop('event')
     users = self.get_users_dict()
 
-    limit_str = 'No Limit!'
+    summary_table = '**%s**' % (event['name'])
+    summary_table += '\t|\t\n:---:|:---:\n'
+
+    if event['description']:
+        summary_table += '**What**|%s\n' % event['description']
+
+    summary_table += '**When**|%s @ %s\n' % (event['date'], event['time'] or '(All day)')
+
+    if event['duration']:
+        summary_table += '**Duration**|%s\n' % datetime.timedelta(seconds=event['duration'])
+
+    if event['place']:
+        summary_table += '**Where**|%s\n' % event['place']
 
     if event['limit']:
-      limit_str = '%d/%d spots left' % (event['limit'] - len(event['yes']), event['limit'])
-
-    summary_table = '**%s**' % (event['name'])
-    summary_table += '\t|\t\n:---:|:---:\n**What**|%s\n**When**|%s @ %s\n**Where**|%s\n**Limit**|%s\n'
-    summary_table = summary_table % (
-      event['description'] or 'N/A',
-      event['date'],
-      event['time'] or '(All day)',
-      event['place'] or 'N/A',
-      limit_str
-    )
+        limit_str = '%d/%d spots left' % (event['limit'] - len(event['yes']), event['limit'])
+        summary_table += '**Limit**|%s\n' % limit_str
 
     confirmation_table = 'YES ({}) |NO ({}) |MAYBE({}) \n:---:|:---:|:---:\n'
 
