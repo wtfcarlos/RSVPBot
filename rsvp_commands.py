@@ -262,7 +262,14 @@ class LimitReachedException(Exception):
 
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex = r'.*?\b(?P<decision>(yes|no|maybe))\b'
+  regex_yes = '(?P<yes_decision>yes(s*?)|yeah(h*?)|in|yep|yas(s*?))'
+  regex_no = '(?P<no_decision>no(o*?)|out|nope|nah(h*?))'
+  regex_maybe = '(?P<maybe_decision>maybe)'
+
+  regex = r'.*?\b({yes}|{no}|{maybe})\b'.format(
+    yes=regex_yes,
+    no=regex_no,
+    maybe=regex_maybe)
 
   responses = {
     "yes": '@**%s** is attending!',
@@ -327,7 +334,9 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     event = kwargs.pop('event')
-    decision = kwargs.pop('decision').lower()
+    yes_decision = kwargs.pop('yes_decision')
+    no_decision = kwargs.pop('no_decision')
+    decision = 'yes' if yes_decision else ('no' if no_decision else 'maybe')
     sender_full_name = kwargs.pop('sender_full_name')
     sender_email = kwargs.pop('sender_email')
 
