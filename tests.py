@@ -353,6 +353,12 @@ class RSVPDecisionTest(RSVPTest):
     def test_rsvp_yes_no(self):
         self.general_yes_with_no_prior_reservation('rsvp yes no')
 
+    def test_rsvp_yessssssssssss(self):
+        self.general_yes_with_no_prior_reservation('rsvp yesssssssssss')
+
+    def test_rsvp_yassssssssssss(self):
+        self.general_yes_with_no_prior_reservation('rsvp yasssssssssss')
+
     def general_no_with_no_prior_reservation(self, msg):
         output = self.issue_command(msg)
 
@@ -367,6 +373,15 @@ class RSVPDecisionTest(RSVPTest):
 
     def test_rsvp_no_way(self):
         self.general_no_with_no_prior_reservation('rsvp no, i\'m busy')
+
+    def test_rsvp_nah(self):
+        self.general_no_with_no_prior_reservation("rsvp nah can't make it :(!")
+
+    def test_rsvp_noooooo(self):
+        self.general_no_with_no_prior_reservation('rsvp nooooooooooooo!')
+
+    def test_rsvp_no_yes(self):
+        self.general_no_with_no_prior_reservation('rsvp no, yes i was there yesterday.')
 
     def rsvp_word_contains_command(self, msg):
         output = self.issue_command(msg)
