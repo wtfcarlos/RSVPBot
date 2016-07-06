@@ -29,10 +29,13 @@ export GOOGLE_CALENDAR_ID="abd123@group.calendar.com" # default is None
 ```
 
 ## Running
+First, make sure python requirements are installed:
 
-`
-python bot.py
-`
+`pip install -r requirements.txt`
+
+Then, to run the bot:
+
+`python bot.py`
 
 ## Testing
 `
