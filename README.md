@@ -28,6 +28,8 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/file" # default is None
 export GOOGLE_CALENDAR_ID="abd123@group.calendar.com" # default is None
 ```
 
+To get set up with Google Application Credentials, see [the Google Credentials Setup Instructions](/google_calendar_instructions.md#google-application-credentials).
+
 ## Running
 First, make sure python requirements are installed:
 
