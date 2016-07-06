@@ -1,3 +1,10 @@
+"""
+Manages a dictionary of email address to name mappings in a json
+file. This script can be run with `python zulip_users.py` to update
+all entries, or `update_zulip_user_dict` can be called with the data
+included with zulip's `realm_user` event to update one user at a time.
+"""
+
 import json
 import os
 

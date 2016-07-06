@@ -39,6 +39,19 @@ Then, to run the bot:
 
 `python bot.py`
 
+#### Updating User Email mapping
+RSVPBot stores a mapping of email addresses to names, which is updated every time a
+`realm_user` event is received. Since rsvp responses are stored by email address, this
+mapping is used to convert the email addresses into names for commands like `rsvp ping`
+and `rsvp summary`. If running this bot for the first time, you can run
+
+```
+python zulip_users.py
+```
+
+which will download all users/email addresses from zulip and populate the json
+file dictionary. This command is safe to run multiple times.
+
 ## Testing
 `
 python tests.py
