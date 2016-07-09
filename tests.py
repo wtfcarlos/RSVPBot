@@ -1,5 +1,5 @@
 from collections import Counter
-import datetime
+from datetime import date, timedelta
 import os
 import unittest
 
@@ -482,15 +482,42 @@ class RSVPCalendarTest(RSVPTest):
 
 class RSVPDateTest(RSVPTest):
     def test_set_date(self):
-        output = self.issue_command('rsvp set date 02/25/2100')
+        output = self.issue_command('rsvp set date 02/25/2099')
 
         self.assertIn(
-            'The date for this event has been set to **02/25/2100**!',
+            'The date for this event has been set to **02/25/99**!',
             output[0]['body']
         )
 
         self.assertEqual(
-            '2100-02-25',
+            '2099-02-25',
+            self.event['date']
+        )
+
+    def test_set_date_parses_human_dates(self):
+        output = self.issue_command('rsvp set date tomorrow')
+
+        tomorrow = date.today() + timedelta(days=1)
+
+        self.assertEqual(
+            str(tomorrow),
+            self.event['date']
+        )
+
+    def test_set_date_prefers_future_when_date_is_ambiguous(self):
+        """
+        When passing an ambiguous weekday we should privilege dates from the
+        future, e.g. if we're on Wednesday and I say `rsvp set date tuesday`
+        then the date should be set to next Tuesday and not yesterday.
+        """
+        next_week_date = date.today() + timedelta(days=6)
+        weekday = next_week_date.strftime("%A")
+
+        output = self.issue_command('rsvp set date %s' % weekday)
+
+
+        self.assertEqual(
+            str(next_week_date),
             self.event['date']
         )
 
@@ -508,7 +535,7 @@ class RSVPDateTest(RSVPTest):
         )
 
     def test_new_event_is_today(self):
-        today = str(datetime.date.today())
+        today = str(date.today())
         self.assertEqual(today, self.event['date'])
 
 
@@ -736,7 +763,7 @@ class RSVPMultipleCommandsTest(RSVPTest):
     def test_rsvp_multiple_commands(self):
         commands = """
 rsvp set time 10:30
-rsvp set date 02/25/2100
+rsvp set date 02/25/2099
 """
 
         output = self.issue_command(commands)
@@ -747,16 +774,16 @@ rsvp set date 02/25/2100
         self.assertEqual('10:30', self.event['time'])
 
         self.assertIn(
-            'The date for this event has been set to **02/25/2100**!',
+            'The date for this event has been set to **02/25/99**!',
             output[1]['body']
         )
-        self.assertEqual( '2100-02-25', self.event['date'])
+        self.assertEqual( '2099-02-25', self.event['date'])
 
     def test_rsvp_multiple_commands_with_other_text(self):
         commands = """
 rsvp set time 10:30
 Looking forward to this!
-rsvp set date 02/25/2100
+rsvp set date 02/25/2099
 """
 
         output = self.issue_command(commands)
@@ -769,10 +796,10 @@ rsvp set date 02/25/2100
         self.assertEqual(None, output[1])
 
         self.assertIn(
-            'The date for this event has been set to **02/25/2100**!',
+            'The date for this event has been set to **02/25/99**!',
             output[2]['body']
         )
-        self.assertEqual( '2100-02-25', self.event['date'])
+        self.assertEqual('2099-02-25', self.event['date'])
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 MSG_INIT_SUCCESSFUL = 'This thread is now an RSVPBot event! Type `rsvp help` for more options.'
-MSG_DATE_SET = 'The date for this event has been set to **%02d/%02d/%04d**!\n`rsvp help` for more options.'
+MSG_DATE_SET = 'The date for this event has been set to **%s**!\n`rsvp help` for more options.'
 MSG_TIME_SET = 'The time for this event has been set to **%02d:%02d**!.\n`rsvp help` for more options.'
 MSG_DURATION_SET = 'The duration for this event has been set to **%s**!.\n`rsvp help` for more options.'
 MSG_TIME_SET_ALLDAY = 'This is now an all day long event.'
@@ -13,7 +13,7 @@ ERROR_NOT_AN_EVENT = "This thread is not an RSVPBot event!. Type `rsvp init` to 
 ERROR_NOT_AUTHORIZED_TO_DELETE = "Oops! You cannot cancel this event! Only the event's original creator can do so."
 ERROR_ALREADY_AN_EVENT = "Oops! This thread is already an RSVPBot event!"
 ERROR_TIME_NOT_VALID = "Oops! **%02d:%02d** is not a valid time!"
-ERROR_DATE_NOT_VALID = "Oops! **%02d/%02d/%04d** is not a valid date in the **future**!"
+ERROR_DATE_NOT_VALID = "Oops! **%s** is not a valid date in the **future**!"
 ERROR_LIMIT_REACHED = "Oh no! The **limit** for this event has been reached!"
 ERROR_MISSING_MOVE_DESTINATION = "`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting')"
 ERROR_BAD_MOVE_DESTINATION = "`%s` is not a valid move destination URL!`rsvp move` requires a Zulip stream URL destination (e.g. 'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') Type `rsvp help` for the correct syntax."

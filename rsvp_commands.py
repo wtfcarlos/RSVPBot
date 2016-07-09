@@ -5,6 +5,7 @@ import datetime
 import random
 
 from pytimeparse.timeparse import timeparse
+from dateparser import parse as dateparse
 
 import calendar_events
 import strings
@@ -380,31 +381,28 @@ class RSVPSetLimitCommand(RSVPEventNeededCommand):
 
 
 class RSVPSetDateCommand(RSVPEventNeededCommand):
-  regex = r'set date (?P<month>\d{1,2})/(?P<day>\d{1,2})/(?P<year>\d{4})$'
+  regex = r'set date (?P<date>.*)$'
 
-  def validate_future_date(self, day, month, year):
+  def _is_in_the_future(self, event_date):
     today = datetime.date.today()
+    return event_date >= today
 
-    try:
-      date = datetime.date(year, month, day)
-    except ValueError:
-      return False
-
-    return date >= today
+  def _parse_date(self, raw_date):
+    dt = dateparse(raw_date, settings={'PREFER_DATES_FROM': 'future'})
+    if dt:
+      return dt.date()
+    return None
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
     event_id = kwargs.pop('event_id')
-    day = kwargs.pop('day')
-    month = kwargs.pop('month')
-    year = kwargs.pop('year')
+    raw_date = kwargs.pop('date')
+    event_date = self._parse_date(raw_date)
 
-    day, month, year = int(day), int(month), int(year)
-
-    if self.validate_future_date(day, month, year):
-      event['date'] = str(datetime.date(year, month, day))
+    if event_date and self._is_in_the_future(event_date):
+      event['date'] = str(event_date)
       events[event_id] = event
-      body = strings.MSG_DATE_SET % (month, day, year)
+      body = strings.MSG_DATE_SET % event_date.strftime("%x")
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
         try:
@@ -412,7 +410,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
         except calendar_events.KeyfilePathNotSpecifiedError:
           pass
     else:
-      body = strings.ERROR_DATE_NOT_VALID % (month, day, year)
+      body = strings.ERROR_DATE_NOT_VALID % raw_date
 
     return RSVPCommandResponse(events, RSVPMessage('stream', body))
 
