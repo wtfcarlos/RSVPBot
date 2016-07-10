@@ -263,8 +263,23 @@ class LimitReachedException(Exception):
 
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex_yes = '(?P<yes_decision>yes(s*?)|yeah(h*?)|in|yep|yas(s*?))'
-  regex_no = '(?P<no_decision>no(o*?)|out|nope|nah(h*?))'
+
+  yes_answers = (
+    "ye(s+?)",
+    "yea(h+?)",
+    "in",
+    "yep",
+    "ya(s+?)"
+  )
+  no_answers = (
+    "n(o+?)",
+    "out",
+    "nope",
+    "na(h+?)"
+  )
+
+  regex_yes = '(?P<yes_decision>%s)' % format('|'.join(yes_answers))
+  regex_no = '(?P<no_decision>%s)' % format('|'.join(no_answers))
   regex_maybe = '(?P<maybe_decision>maybe)'
 
   regex = r'.*?\b({yes}|{no}|{maybe})\b'.format(
