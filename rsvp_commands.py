@@ -273,16 +273,12 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     maybe=regex_maybe)
 
   responses = {
-    "yes": '@**%s** is attending!',
-    "no": '@**%s** is **not** attending!',
-    "maybe": '@**%s** might be attending. It\'s complicated.',
+    "yes": "@**%s** is attending!",
+    "no": "@**%s** is **not** attending!",
+    "maybe": "@**%s** might be attending. It's complicated.",
   }
 
-  vips = []
-  with open('vips.txt', 'r') as vips_file:
-    vips = [vip_name.strip() for vip_name in vips_file]
-
-  vip_yes_prefixes = [
+  funky_yes_prefixes = [
     "GET EXCITED!! ",
     "AWWW YISS!! ",
     "YASSSSS HENNY! ",
@@ -292,11 +288,21 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "YEAAAAAAHHH!!!! :tada: ",
   ]
 
-  vip_no_postfixes = [
+  funky_no_postfixes = [
     " :confounded:",
     " Bummer!",
     " Oh no!!",
   ]
+
+  def generate_response(self, decision, sender_name, funkify=False):
+      response_string = self.responses.get(decision) % sender_name
+      if not funkify:
+          return response_string
+      if decision == 'yes':
+        return random.choice(self.funky_yes_prefixes) + response_string
+      elif decision == 'no':
+        return response_string + random.choice(self.funky_no_postfixes)
+      return response_string
 
   def confirm(self, event, event_id, sender_email, decision):
     # Temporary kludge to add a 'maybe' array to legacy events. Can be removed after
@@ -338,13 +344,11 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     yes_decision = kwargs.pop('yes_decision')
     no_decision = kwargs.pop('no_decision')
     decision = 'yes' if yes_decision else ('no' if no_decision else 'maybe')
-    sender_full_name = kwargs.pop('sender_full_name')
+    sender_name = kwargs.pop('sender_full_name')
     sender_email = kwargs.pop('sender_email')
 
     limit = event['limit']
 
-    vip_prefix = ''
-    vip_postfix = ''
 
     # TODO:
     # if (this.yes_no_ambigous()):
@@ -353,20 +357,13 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     try:
       event = self.attempt_confirm(event, event_id,  sender_email, decision, limit)
 
-      if sender_full_name in self.vips:
-        if decision == 'yes':
-          vip_prefix = random.choice(self.vip_yes_prefixes)
-        else:
-          vip_postfix = random.choice(self.vip_no_postfixes)
-
       # Update the events dict with the new event.
       events[event_id] = event
-      response_string = self.responses.get(decision) % sender_full_name
-      response_string = vip_prefix + response_string + vip_postfix
-      return RSVPCommandResponse(events, RSVPMessage('stream', response_string))
-
+      # 1 in 10 chance of generating a funky response
+      response = self.generate_response(decision, sender_name, funkify=(random.random() < 0.1))
     except LimitReachedException:
-      return RSVPCommandResponse(events, RSVPMessage('stream', strings.ERROR_LIMIT_REACHED))
+      response = strings.ERROR_LIMIT_REACHED
+    return RSVPCommandResponse(events, RSVPMessage('stream', response))
 
 
 class RSVPSetLimitCommand(RSVPEventNeededCommand):

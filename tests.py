@@ -244,6 +244,36 @@ class RSVPMoveTest(RSVPTest):
 
 
 class RSVPDecisionTest(RSVPTest):
+
+    def test_generate_response_yes(self):
+        command = rsvp_commands.RSVPConfirmCommand(prefix='rsvp')
+        response = command.generate_response(decision='yes', sender_name='Ginger')
+        self.assertEqual("@**Ginger** is attending!", response)
+
+    def test_generate_response_no(self):
+        command = rsvp_commands.RSVPConfirmCommand(prefix='rsvp')
+        response = command.generate_response(decision='no', sender_name='Ginger')
+        self.assertEqual("@**Ginger** is **not** attending!", response)
+
+    def test_generate_response_maybe(self):
+        command = rsvp_commands.RSVPConfirmCommand(prefix='rsvp')
+        response = command.generate_response(decision='maybe', sender_name='Ginger')
+        self.assertEqual("@**Ginger** might be attending. It's complicated.", response)
+
+    def test_generate_funky_response_yes(self):
+        command = rsvp_commands.RSVPConfirmCommand(prefix='rsvp')
+        normal_response = command.generate_response(decision='yes', sender_name='Ginger')
+        possible_expected_responses = [prefix + normal_response for prefix in command.funky_yes_prefixes]
+        response = command.generate_response(decision='yes', sender_name='Ginger', funkify=True)
+        self.assertIn(response, possible_expected_responses)
+
+    def test_generate_funky_response_no(self):
+        command = rsvp_commands.RSVPConfirmCommand(prefix='rsvp')
+        normal_response = command.generate_response(decision='no', sender_name='Ginger')
+        possible_expected_responses = [normal_response + postfix for postfix in command.funky_no_postfixes]
+        response = command.generate_response(decision='no', sender_name='Ginger', funkify=True)
+        self.assertIn(response, possible_expected_responses)
+
     def test_rsvp_yes_with_no_prior_reservation(self):
         output = self.issue_command('rsvp yes')
 
@@ -437,7 +467,7 @@ class RSVPLimitTest(RSVPTest):
             sender_email='b@example.com'
         )
 
-        self.assertEqual('@**Sender B** is attending!', output[0]['body'])
+        self.assertIn('@**Sender B** is attending!', output[0]['body'])
         self.assertIn('b@example.com', self.event['yes'])
         self.assertEqual(498, self.event['limit'] - len(self.event['yes']))
 
