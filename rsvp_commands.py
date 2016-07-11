@@ -445,11 +445,13 @@ class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
 
 
 class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
-  regex = r'set (?P<attribute>(place|description)) (?P<value>.+)$'
+  regex = r'set (?P<attribute>(location|place|description)) (?P<value>.+)$'
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     attribute = kwargs.pop('attribute')
+    if attribute == "location":
+      attribute = "place"
     value = kwargs.pop('value')
 
     event = events[event_id]

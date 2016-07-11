@@ -623,6 +623,13 @@ class RSVPPlaceTest(RSVPTest):
         self.assertIn('The place for this event has been set', output[0]['body'])
         self.assertIn(self.event['place'], output[0]['body'])
 
+    def test_set_location(self):
+        # location should work as an alias for place
+        output = self.issue_command('rsvp set location Hopper!')
+        self.assertEqual(self.event['place'], 'Hopper!')
+        self.assertIn('The place for this event has been set', output[0]['body'])
+        self.assertIn(self.event['place'], output[0]['body'])
+
 
 class RSVPSummaryTest(RSVPTest):
     def test_summary_shows_duration(self):
