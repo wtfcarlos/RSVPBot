@@ -282,7 +282,11 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
   regex_no = '(?P<no_decision>%s)' % format('|'.join(no_answers))
   regex_maybe = '(?P<maybe_decision>maybe)'
 
-  regex = r'.*?\b({yes}|{no}|{maybe})\b'.format(
+  # We're using a negative lookahead/lookbehind to make sure that whatever is
+  # matched is a word on its own, i.e. we want to match "yes" but not
+  # "yesterday". We can't use simple word boundaries here ("\b") if we want to
+  # support emojis like :thumbsup: because ':' is not a word character.
+  regex = r'.*?(?<!\w)({yes}|{no}|{maybe})(?!\w)'.format(
     yes=regex_yes,
     no=regex_no,
     maybe=regex_maybe)
