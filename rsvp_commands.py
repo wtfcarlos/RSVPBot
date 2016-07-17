@@ -2,10 +2,11 @@
 from __future__ import unicode_literals
 import re
 import datetime
+from time import mktime
 import random
 
 from pytimeparse.timeparse import timeparse
-from dateparser import parse as dateparse
+import parsedatetime
 
 import calendar_events
 import strings
@@ -219,7 +220,7 @@ class RSVPMoveCommand(RSVPEventNeededCommand):
     creator = event['creator']
 
     # check and make sure a valid Zulip stream/topic URL is passed
-    if not destination: 
+    if not destination:
       body = strings.ERROR_MISSING_MOVE_DESTINATION
     elif creator != sender_id:
       body = strings.ERROR_NOT_AUTHORIZED_TO_DELETE
@@ -378,6 +379,7 @@ class RSVPSetLimitCommand(RSVPEventNeededCommand):
 
 
 class RSVPSetDateCommand(RSVPEventNeededCommand):
+  cal = parsedatetime.Calendar()
   regex = r'set date (?P<date>.*)$'
 
   def _is_in_the_future(self, event_date):
@@ -385,16 +387,17 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
     return event_date >= today
 
   def _parse_date(self, raw_date):
-    dt = dateparse(raw_date, settings={'PREFER_DATES_FROM': 'future'})
-    if dt:
-      return dt.date()
-    return None
+    time_struct, parse_status = self.cal.parse(raw_date)
+    return datetime.date.fromtimestamp(mktime(time_struct))
 
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
     event_id = kwargs.pop('event_id')
     raw_date = kwargs.pop('date')
-    event_date = self._parse_date(raw_date)
+    try:
+      event_date = self._parse_date(raw_date)
+    except ValueError:
+      event_date = None
 
     if event_date and self._is_in_the_future(event_date):
       event['date'] = str(event_date)
