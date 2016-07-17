@@ -66,9 +66,10 @@ class RSVPEventNeededCommand(RSVPCommand):
   """Base class for a command where an event needs to exist prior to execution."""
   def execute(self, events, *args, **kwargs):
     event = kwargs.get('event')
+    sender_email = kwargs.get('sender_email')
     if event:
       return self.run(events, *args, **kwargs)
-    return RSVPCommandResponse(events, RSVPMessage('stream', strings.ERROR_NOT_AN_EVENT))
+    return RSVPCommandResponse(events, RSVPMessage('private', strings.ERROR_NOT_AN_EVENT, sender_email))
 
 
 class RSVPInitCommand(RSVPCommand):
@@ -78,12 +79,14 @@ class RSVPInitCommand(RSVPCommand):
     sender_id   = kwargs.pop('sender_id')
     event_id    = kwargs.pop('event_id')
     subject    = kwargs.pop('subject')
+    sender_email = kwargs.pop('sender_email')
 
     body = strings.MSG_INIT_SUCCESSFUL
 
     if events.get(event_id):
       # Event already exists, error message, we can't initialize twice.
       body = strings.ERROR_ALREADY_AN_EVENT
+      response = RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
     else:
       # Update the dictionary with the new event and commit.
       events.update(
@@ -93,7 +96,7 @@ class RSVPInitCommand(RSVPCommand):
             'description': None,
             'place': None,
             'creator': sender_id,
-            'yes': [],
+            'yes': [sender_email],
             'no': [],
             'maybe': [],
             'time': None,
@@ -104,8 +107,8 @@ class RSVPInitCommand(RSVPCommand):
           }
         }
       )
+      response = RSVPCommandResponse(events, RSVPMessage('stream', body))
 
-    response = RSVPCommandResponse(events, RSVPMessage('stream', body))
     return response
 
 
@@ -116,10 +119,11 @@ class RSVPSetDurationCommand(RSVPEventNeededCommand):
     event = kwargs.pop('event')
     event_id = kwargs.pop('event_id')
     duration = kwargs.pop('duration')
+    sender_email = kwargs.pop('sender_email')
 
     parsed_duration_in_seconds = timeparse(duration, granularity='minutes')
     event['duration'] = parsed_duration_in_seconds
-    body = strings.MSG_DURATION_SET % datetime.timedelta(seconds=parsed_duration_in_seconds)
+    body = strings.MSG_DURATION_SET % (event_id, datetime.timedelta(seconds=parsed_duration_in_seconds))
     calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
     if calendar_event_id:
       try:
@@ -127,7 +131,7 @@ class RSVPSetDurationCommand(RSVPEventNeededCommand):
       except calendar_events.KeyfilePathNotSpecifiedError:
         pass
 
-    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
 
 class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
@@ -295,9 +299,9 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     maybe=regex_maybe)
 
   responses = {
-    "yes": "@**%s** is attending!",
-    "no": "@**%s** is **not** attending!",
-    "maybe": "@**%s** might be attending. It's complicated.",
+    "yes": "**You** are attending **%s**!",
+    "no": "You are **not** attending **%s**!",
+    "maybe": "You **might** be attending **%s**. It's complicated.",
   }
 
   funky_yes_prefixes = [
@@ -316,8 +320,8 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     " Oh no!!",
   ]
 
-  def generate_response(self, decision, sender_name, funkify=False):
-      response_string = self.responses.get(decision) % sender_name
+  def generate_response(self, decision, event_id, funkify=False):
+      response_string = self.responses.get(decision) % event_id
       if not funkify:
           return response_string
       if decision == 'yes':
@@ -371,28 +375,22 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
 
     limit = event['limit']
 
-
-    # TODO:
-    # if (this.yes_no_ambigous()):
-    #   return RSVPCommandResponse("Yes no yes_no_ambigous", events)
-
     try:
       event = self.attempt_confirm(event, event_id,  sender_email, decision, limit)
 
       # Update the events dict with the new event.
       events[event_id] = event
       # 1 in 10 chance of generating a funky response
-      response = self.generate_response(decision, sender_name, funkify=(random.random() < 0.1))
+      response = self.generate_response(decision, event_id, funkify=(random.random() < 0.1))
     except LimitReachedException:
       response = strings.ERROR_LIMIT_REACHED
-    return RSVPCommandResponse(events, RSVPMessage('stream', response))
+    return RSVPCommandResponse(events, RSVPMessage('private', response, sender_email))
 
 
 class RSVPSetLimitCommand(RSVPEventNeededCommand):
   regex = r'set limit (?P<limit>\d+)$'
 
   def run(self, events, *args, **kwargs):
-
     event = kwargs.pop('event')
     attendance_limit = int(kwargs.pop('limit'))
     event['limit'] = attendance_limit
@@ -414,6 +412,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
     event = kwargs.pop('event')
     event_id = kwargs.pop('event_id')
+    sender_email = kwargs.pop('sender_email')
     raw_date = kwargs.pop('date')
     try:
       event_date = self._parse_date(raw_date)
@@ -423,7 +422,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
     if event_date and self._is_in_the_future(event_date):
       event['date'] = str(event_date)
       events[event_id] = event
-      body = strings.MSG_DATE_SET % event_date.strftime("%x")
+      body = strings.MSG_DATE_SET % (event_id, event_date.strftime("%x"))
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
         try:
@@ -433,7 +432,7 @@ class RSVPSetDateCommand(RSVPEventNeededCommand):
     else:
       body = strings.ERROR_DATE_NOT_VALID % raw_date
 
-    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
 
 class RSVPSetTimeCommand(RSVPEventNeededCommand):
@@ -442,11 +441,12 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
     hours, minutes = int(kwargs.pop('hours')), int(kwargs.pop('minutes'))
+    sender_email = kwargs.pop('sender_email')
 
     if hours in range(0, 24) and minutes in range(0, 60):
       event = events[event_id]
       event['time'] = '%02d:%02d' % (hours, minutes)
-      body = strings.MSG_TIME_SET % (hours, minutes)
+      body = strings.MSG_TIME_SET % (event_id, hours, minutes)
       calendar_event_id = event.get('calendar_event') and event['calendar_event']['id']
       if calendar_event_id:
         try:
@@ -456,7 +456,7 @@ class RSVPSetTimeCommand(RSVPEventNeededCommand):
     else:
       body = strings.ERROR_TIME_NOT_VALID % (hours, minutes)
 
-    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
 
 class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
@@ -464,8 +464,9 @@ class RSVPSetTimeAllDayCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
+    sender_email = kwargs.pop('sender_email')
     events[event_id]['time'] = None
-    return RSVPCommandResponse(events, RSVPMessage('stream', strings.MSG_TIME_SET_ALLDAY))
+    return RSVPCommandResponse(events, RSVPMessage('private', strings.MSG_TIME_SET_ALLDAY % event_id, sender_email))
 
 
 class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
@@ -473,6 +474,7 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
     event_id = kwargs.pop('event_id')
+    sender_email = kwargs.pop('sender_email')
     attribute = kwargs.pop('attribute')
     if attribute == "location":
       attribute = "place"
@@ -487,7 +489,7 @@ class RSVPSetStringAttributeCommand(RSVPEventNeededCommand):
       except calendar_events.KeyfilePathNotSpecifiedError:
         pass
     body = strings.MSG_STRING_ATTR_SET % (attribute, value)
-    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
 
 class RSVPPingCommand(RSVPEventNeededCommand):
@@ -524,6 +526,8 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
   def run(self, events, *args, **kwargs):
 
+    sender_email = kwargs.pop('sender_email')
+
     contributors = [
       "Mudit Ameta (SP2'15)",
       "Diego Berrocal (F2'15)",
@@ -537,6 +541,9 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
       "Benjamin Gilbert (F2'15)",
       "Andrew Drozdov (SP1'15)",
       "Alex Wilson (S1'16)",
+      "Jérémie Jost (S1'16)",
+      "Amulya Reddy (S1'16)",
+      "James J. Porter (S'13)",
     ]
 
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
@@ -550,7 +557,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
 
     body += "\n\nThe code for **RSVPBot** is available at https://github.com/kokeshii/RSVPBot"
 
-    return RSVPCommandResponse(events, RSVPMessage('stream', body))
+    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
 
 class RSVPSummaryCommand(RSVPEventNeededCommand):

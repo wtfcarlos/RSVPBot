@@ -127,7 +127,7 @@ class RSVP(object):
           # the pair
           return response.messages
 
-      return [rsvp_commands.RSVPMessage('stream', ERROR_INVALID_COMMAND % (content))]
+      return [rsvp_commands.RSVPMessage('private', ERROR_INVALID_COMMAND % (content), message['sender_email'])]
     return [rsvp_commands.RSVPMessage('private', None)]
 
 
