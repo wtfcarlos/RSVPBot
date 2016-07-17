@@ -264,11 +264,32 @@ class LimitReachedException(Exception):
 
 
 class RSVPConfirmCommand(RSVPEventNeededCommand):
-  regex_yes = '(?P<yes_decision>yes(s*?)|yeah(h*?)|in|yep|yas(s*?))'
-  regex_no = '(?P<no_decision>no(o*?)|out|nope|nah(h*?))'
+
+  yes_answers = (
+    "ye(s+?)",
+    "yea(h+?)",
+    "in",
+    "yep",
+    "ya(s+?)",
+    ":thumbs_?up:"
+  )
+  no_answers = (
+    "n(o+?)",
+    "out",
+    "nope",
+    "na(h+?)",
+    ":thumbs_?down:"
+  )
+
+  regex_yes = '(?P<yes_decision>%s)' % format('|'.join(yes_answers))
+  regex_no = '(?P<no_decision>%s)' % format('|'.join(no_answers))
   regex_maybe = '(?P<maybe_decision>maybe)'
 
-  regex = r'.*?\b({yes}|{no}|{maybe})\b'.format(
+  # We're using a negative lookahead/lookbehind to make sure that whatever is
+  # matched is a word on its own, i.e. we want to match "yes" but not
+  # "yesterday". We can't use simple word boundaries here ("\b") if we want to
+  # support emojis like :thumbsup: because ':' is not a word character.
+  regex = r'.*?(?<!\w)({yes}|{no}|{maybe})(?!\w)'.format(
     yes=regex_yes,
     no=regex_no,
     maybe=regex_maybe)
