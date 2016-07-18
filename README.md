@@ -66,10 +66,24 @@ python tests.py
 `rsvp help`|Shows this handy table.
 `rsvp ping`|Pings everyone that has RSVP'd so far.
 `rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)
-`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)
+`rsvp set date DATE`|Sets the date for this event (see "date format" section for supported formats) (optional, defaults to the date the event was created with `rsvp init`)
 `rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)
-`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)
+`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional) (alias: `rsvp set location`)
 `rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.
 `rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)
+`rsvp move <destination_url>`|Moves this event to another stream/topic. Requires full URL for the destination (e.g.'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') (can only be called by the caller of `rsvp init`)
 `rsvp summary`|Displays a summary of this event, including the description, and list of attendees.
 `rsvp credits`|Lists all the awesome people that made RSVPBot a reality.
+
+
+**Date format**
+
+The `rsvp set date` command supports US-style dates (`mm/dd/yy(yy)`), ISO 8601 dates (`yyyy-mm-dd`), and tries to understand most human dates. The following (non exhaustive) examples are all valid ways to set the date:
+```
+rsvp set date 08/29/16
+rsvp set date 2016-08-29
+rsvp set date today
+rsvp set date tomorrow
+rsvp set date in 2 days
+rsvp set date tuesday next week
+```

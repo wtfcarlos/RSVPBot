@@ -163,29 +163,14 @@ class RSVPCreateCalendarEventCommand(RSVPEventNeededCommand):
 class RSVPHelpCommand(RSVPCommand):
   regex = r'help$'
 
+  with open('README.md', 'r') as readme_file:
+      readme_contents = readme_file.read()
+      _, commands_table = readme_contents.split("## Commands\n")
+
   def run(self, events, *args, **kwargs):
     sender_email = kwargs.pop('sender_email')
 
-    body = "**Command**|**Description**\n"
-    body += "--- | ---\n"
-    body += "**`rsvp yes`**|Marks **you** as attending this event.\n"
-    body += "**`rsvp no`**|Marks you as **not** attending this event.\n"
-    body += "`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n"
-    body += "`rsvp help`|Shows this handy table.\n"
-    body += "`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.\n"
-    body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
-    body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
-    body += "`rsvp set duration HH:mm or 30m`|Sets the length of time this event will last (optional, only required for adding the event to the Calendar).\n"
-    body += "`rsvp add to calendar`|Creates an event on the Calendar. Requires time, date, and duration to be set first.\n"
-    body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
-    body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
-    body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
-    body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
-    body += "`rsvp move <destination_url>`|Moves this event to another stream/topic. Requires full URL for the destination (e.g.'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') (can only be called by the caller of `rsvp init`)\n"
-    body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n"
-    body += "`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.\n"
-
-    return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
+    return RSVPCommandResponse(events, RSVPMessage('private', self.commands_table, sender_email))
 
 
 class RSVPCancelCommand(RSVPEventNeededCommand):

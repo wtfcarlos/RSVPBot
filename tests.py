@@ -790,6 +790,43 @@ class RSVPPingTest(RSVPTest):
         self.assertIn('we\'re all going to the yes concert', output[0]['body'])
 
 
+class RSVPHelpTest(RSVPTest):
+
+    def test_rsvp_help_generates_markdown_table(self):
+        output = self.issue_custom_command('rsvp help')
+        header = """
+**Command**|**Description**
+--- | ---
+        """.strip()
+        self.assertIn(header, output[0]['body'])
+
+    def test_rsvp_help_contains_date_format_section(self):
+        output = self.issue_custom_command('rsvp help')
+        self.assertIn("**Date format**", output[0]['body'])
+
+    def test_rsvp_help_contains_help_for_all_commands(self):
+        # FIXME: currently enumerating commands manually, which is brittle.
+        # Being able to get a list of all commands
+        commands = (
+            "yes",
+            "no",
+            "init",
+            "help",
+            "ping",
+            "move",
+            "set time",
+            "set date",
+            "set place",
+            "set limit",
+            "summary",
+            "credits"
+        )
+        output = self.issue_custom_command('rsvp help')
+        for command in commands:
+            self.assertIn("`rsvp %s" % command, output[0]['body'])
+
+
+
 class RSVPMessageTypesTest(RSVPTest):
     def test_rsvp_private_message(self):
         output = self.issue_custom_command('rsvp yes', message_type='private')
