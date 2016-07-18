@@ -800,6 +800,10 @@ class RSVPHelpTest(RSVPTest):
         """.strip()
         self.assertIn(header, output[0]['body'])
 
+    def test_rsvp_help_contains_date_format_section(self):
+        output = self.issue_custom_command('rsvp help')
+        self.assertIn("**Date format**", output[0]['body'])
+
     def test_rsvp_help_contains_help_for_all_commands(self):
         # FIXME: currently enumerating commands manually, which is brittle.
         # Being able to get a list of all commands
