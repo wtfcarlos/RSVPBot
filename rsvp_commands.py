@@ -166,24 +166,26 @@ class RSVPHelpCommand(RSVPCommand):
   def run(self, events, *args, **kwargs):
     sender_email = kwargs.pop('sender_email')
 
-    body = "**Command**|**Description**\n"
-    body += "--- | ---\n"
-    body += "**`rsvp yes`**|Marks **you** as attending this event.\n"
-    body += "**`rsvp no`**|Marks you as **not** attending this event.\n"
-    body += "`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.\n"
-    body += "`rsvp help`|Shows this handy table.\n"
-    body += "`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.\n"
-    body += "`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)\n"
-    body += "`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)\n"
-    body += "`rsvp set duration HH:mm or 30m`|Sets the length of time this event will last (optional, only required for adding the event to the Calendar).\n"
-    body += "`rsvp add to calendar`|Creates an event on the Calendar. Requires time, date, and duration to be set first.\n"
-    body += "`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)\n"
-    body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
-    body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
-    body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
-    body += "`rsvp move <destination_url>`|Moves this event to another stream/topic. Requires full URL for the destination (e.g.'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') (can only be called by the caller of `rsvp init`)\n"
-    body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n"
-    body += "`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.\n"
+    body = """
+**Command**|**Description**
+--- | ---
+**`rsvp yes`**|Marks **you** as attending this event.
+**`rsvp no`**|Marks you as **not** attending this event.
+`rsvp init`|Initializes a thread as an RSVPBot event. Must be used before any other command.
+`rsvp help`|Shows this handy table.
+`rsvp ping <message>`|Pings everyone that has RSVP'd so far. Optionally, sends a message, if provided.
+`rsvp set time HH:mm`|Sets the time for this event (24-hour format) (optional)
+`rsvp set date mm/dd/yyyy`|Sets the date for this event (optional, if not explicitly set, the date for the event is the date of the creation of the event, i.e. the call to `rsvp init`)
+`rsvp set duration HH:mm or 30m`|Sets the length of time this event will last (optional, only required for adding the event to the Calendar).
+`rsvp add to calendar`|Creates an event on the Calendar. Requires time, date, and duration to be set first.
+`rsvp set description DESCRIPTION`|Sets this event's description to DESCRIPTION (optional)
+`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)
+`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.
+`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)
+`rsvp move <destination_url>`|Moves this event to another stream/topic. Requires full URL for the destination (e.g.'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') (can only be called by the caller of `rsvp init`)
+`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.
+`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.
+    """.strip()
 
     return RSVPCommandResponse(events, RSVPMessage('private', body, sender_email))
 
