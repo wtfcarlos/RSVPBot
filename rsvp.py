@@ -83,7 +83,7 @@ class RSVP(object):
     """Split multiple line message and collate the responses."""
     content = message['content']
     responses = []
-    lines = self.normalize_whitespace(content)
+    lines = normalize_whitespace(content)
     for line in lines:
       responses.extend(self.route_internal(message, line))
     return responses
@@ -163,8 +163,9 @@ class RSVP(object):
     """
     return u'{}/{}'.format(message['display_recipient'], message['subject'])
 
-  def normalize_whitespace(self, content):
-    """Strips trailing and leading whitespace, and normalizes contiguous
+
+def normalize_whitespace(content):
+    """Strips trailing and leading whitespace from each line, and normalizes contiguous
     whitespace with a single space.
     """
-    return [re.sub(r'\s+', ' ', line) for line in content.strip().split('\n')]
+    return [re.sub(r'\s+', ' ', line.strip()) for line in content.strip().split('\n')]
