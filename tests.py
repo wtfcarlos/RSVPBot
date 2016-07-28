@@ -826,7 +826,6 @@ class RSVPHelpTest(RSVPTest):
             self.assertIn("`rsvp %s" % command, output[0]['body'])
 
 
-
 class RSVPMessageTypesTest(RSVPTest):
     def test_rsvp_private_message(self):
         output = self.issue_custom_command('rsvp yes', message_type='private')
@@ -840,6 +839,36 @@ class RSVPMessageTypesTest(RSVPTest):
 
 
 class RSVPMultipleCommandsTest(RSVPTest):
+    def test_rsvp_multiple_commands_with_trailing_spaces(self):
+        commands = """
+rsvp set time 10:30 
+rsvp set date 02/25/2099 
+"""
+        output = self.issue_command(commands)
+
+        self.assertIn('has been set to **10:30**', output[0]['body'])
+        self.assertEqual('10:30', self.event['time'])
+        self.assertIn('has been set to **02/25/99**!', output[1]['body'])
+        self.assertEqual( '2099-02-25', self.event['date'])
+
+    def test_rsvp_multiple_commands_with_init(self):
+        # hack to allow rsvp init to be run in whatever the "current stream" is.
+        output = self.issue_command('rsvp move http://testhost/#narrow/stream/test-move/subject/MovedTo')
+        commands = """
+rsvp init
+rsvp set time 10:30
+rsvp set date 02/25/2099
+"""
+
+        output = self.issue_command(commands)
+        event = self.get_test_event()
+
+        self.assertIn('This thread is now an RSVPBot event! Type `rsvp help` for more options.', output[0]['body'])
+        self.assertIn('has been set to **10:30**', output[1]['body'])
+        self.assertEqual('10:30', event['time'])
+        self.assertIn('has been set to **02/25/99**!', output[2]['body'])
+        self.assertEqual( '2099-02-25', event['date'])
+
     def test_rsvp_multiple_commands(self):
         commands = """
 rsvp set time 10:30
