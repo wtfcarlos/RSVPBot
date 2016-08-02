@@ -270,7 +270,8 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "nope",
     "na(h+?)",
     ":thumbs_?down:",
-    "n"
+    "n",
+    ":-1:"
   )
 
   regex_yes = '(?P<yes_decision>%s)' % format('|'.join(yes_answers))

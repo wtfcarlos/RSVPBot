@@ -406,6 +406,9 @@ class RSVPDecisionTest(RSVPTest):
     def test_rsvp_plus_one(self):
         self.general_yes_with_no_prior_reservation('rsvp :+1:')
 
+    def test_rsvp_minus_one(self):
+        self.general_no_with_no_prior_reservation('rsvp :-1:')
+
     def test_rsvp_y(self):
         self.general_yes_with_no_prior_reservation('rsvp y')
 
