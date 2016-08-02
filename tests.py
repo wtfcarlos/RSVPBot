@@ -403,6 +403,19 @@ class RSVPDecisionTest(RSVPTest):
     def test_rsvp_thumbs_down(self):
         self.general_no_with_no_prior_reservation('rsvp :thumbs_down:')
 
+    def test_rsvp_plus_one(self):
+        self.general_yes_with_no_prior_reservation('rsvp :+1:')
+
+    def test_rsvp_minus_one(self):
+        self.general_no_with_no_prior_reservation('rsvp :-1:')
+
+    def test_rsvp_y(self):
+        self.general_yes_with_no_prior_reservation('rsvp y')
+
+    def test_rsvp_n(self):
+        self.general_no_with_no_prior_reservation('rsvp n')
+
+
     def general_no_with_no_prior_reservation(self, msg):
         output = self.issue_command(msg)
 
