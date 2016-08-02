@@ -260,7 +260,9 @@ class RSVPConfirmCommand(RSVPEventNeededCommand):
     "in",
     "yep",
     "ya(s+?)",
-    ":thumbs_?up:"
+    ":thumbs_?up:",
+    "y",
+    ":+1:"
   )
   no_answers = (
     "n(o+?)",
