@@ -96,7 +96,7 @@ class CalendarEventTest(unittest.TestCase):
                 'dateTime': '2100-02-25T11:00:00'},
             'location': 'Hopper!',
             'summary': 'Testing',
-            'description': 'A very fun party\r\rFor more information or to RSVP, see https://zulip.com#narrow/stream/455.20Broadway/topic/Practical.20web.20app.20security.206.2F22',
+            'description': 'A very fun party\r\rFor more information or to RSVP, see https://recurse.zulipchat.com#narrow/stream/455.20Broadway/topic/Practical.20web.20app.20security.206.2F22',
             'attendees': [],
         }
 
@@ -132,7 +132,7 @@ class CalendarEventTest(unittest.TestCase):
                 'dateTime': '2100-02-25T11:00:00'},
             'location': 'Hopper!',
             'summary': 'Testing',
-            'description': 'A very fun party\r\rFor more information or to RSVP, see https://zulip.com#narrow/stream/test/topic/test',
+            'description': 'A very fun party\r\rFor more information or to RSVP, see https://recurse.zulipchat.com#narrow/stream/test/topic/test',
             'attendees': [],
         }
 

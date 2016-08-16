@@ -90,7 +90,7 @@ class Bot():
 if __name__ == "__main__":
     ZULIP_USERNAME = os.environ['ZULIP_RSVP_EMAIL']
     ZULIP_API_KEY = os.environ['ZULIP_RSVP_KEY']
-    ZULIP_SITE = os.getenv('ZULIP_RSVP_SITE', 'https://zulip.com')
+    ZULIP_SITE = os.getenv('ZULIP_RSVP_SITE', 'https://recurse.zulipchat.com')
     KEY_WORD = os.getenv('ZULIP_KEY_WORD', 'rsvp')
     SANDBOX_STREAM = os.getenv('ZULIP_RSVP_SANDBOX_STREAM', None)
     SUBSCRIBED_STREAMS = []

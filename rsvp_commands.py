@@ -181,7 +181,7 @@ class RSVPHelpCommand(RSVPCommand):
     body += "`rsvp set place PLACE_NAME`|Sets the place for this event to PLACE_NAME (optional)\n"
     body += "`rsvp set limit LIMIT`|Set the attendance limit for this event to LIMIT. Set LIMIT as 0 for infinite attendees.\n"
     body += "`rsvp cancel`|Cancels this event (can only be called by the caller of `rsvp init`)\n"
-    body += "`rsvp move <destination_url>`|Moves this event to another stream/topic. Requires full URL for the destination (e.g.'https://zulip.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') (can only be called by the caller of `rsvp init`)\n"
+    body += "`rsvp move <destination_url>`|Moves this event to another stream/topic. Requires full URL for the destination (e.g.'https://recurse.zulipchat.com/#narrow/stream/announce/topic/All.20Hands.20Meeting') (can only be called by the caller of `rsvp init`)\n"
     body += "`rsvp summary`|Displays a summary of this event, including the description, and list of attendees.\n"
     body += "`rsvp credits`|Lists all the awesome people that made RSVPBot a reality.\n"
 
