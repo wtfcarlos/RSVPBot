@@ -3,7 +3,7 @@ import urlparse
 import urllib
 import re
 
-ZULIP_SITE = os.getenv('ZULIP_RSVP_SITE', 'https://zulip.com')
+ZULIP_SITE = os.getenv('ZULIP_RSVP_SITE', 'https://recurse.zulipchat.com')
 
 
 def narrow_url_to_stream_topic(url):

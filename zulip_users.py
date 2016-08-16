@@ -14,7 +14,7 @@ import zulip
 def _get_zulip_client():
     username = os.environ['ZULIP_RSVP_EMAIL']
     api_key = os.environ['ZULIP_RSVP_KEY']
-    site = os.getenv('ZULIP_RSVP_SITE', 'https://zulip.com')
+    site = os.getenv('ZULIP_RSVP_SITE', 'https://recurse.zulipchat.com')
 
     client = zulip.Client(username, api_key, site=site)
     client._register('get_users', method='GET', url='users')

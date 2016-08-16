@@ -169,7 +169,6 @@ class RSVPHelpCommand(RSVPCommand):
 
   def run(self, events, *args, **kwargs):
     sender_email = kwargs.pop('sender_email')
-
     return RSVPCommandResponse(events, RSVPMessage('private', self.commands_table, sender_email))
 
 
