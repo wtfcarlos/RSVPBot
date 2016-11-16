@@ -14,10 +14,6 @@ import util
 from zulip_users import ZulipUsers
 
 
-ISOWEEKDAY = {1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday',
-              5: 'Friday', 6: 'Saturday', 7: 'Sunday'}
-
-
 class RSVPMessage(object):
   """Class that represents a response from an RSVPCommand.
 
@@ -571,7 +567,7 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
 
     date = datetime.datetime.strptime(event['date'], '%Y-%m-%d').date()
     summary_table += '**When**|%s @ %s\n' % (event['date'], event['time'] or '(All day)')
-    summary_table += '**Day**|%s \n' % (ISOWEEKDAY.get(date.isoweekday()))
+    summary_table += '**Day**|%s \n' % (date.strftime("%A"))
 
     if event['duration']:
         summary_table += '**Duration**|%s\n' % datetime.timedelta(seconds=event['duration'])
