@@ -20,7 +20,7 @@ class Bot():
         self.client = zulip.Client(zulip_username, zulip_api_key, site=zulip_site)
         self.client._register('get_users', method='GET', url='users')
         self.subscriptions = self.subscribe_to_streams()
-        self.rsvp = rsvp.RSVP(key_word, self.get_backend)
+        self.rsvp = rsvp.RSVP(key_word, self.get_backend())
 
 
     def get_backend(self):
