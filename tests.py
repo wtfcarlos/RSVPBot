@@ -9,6 +9,7 @@ import calendar_events
 import rsvp
 import rsvp_commands
 from zulip_users import ZulipUsers
+from backends import FileBackend
 
 
 class CalendarEventTest(unittest.TestCase):
@@ -145,7 +146,7 @@ class CalendarEventTest(unittest.TestCase):
 class RSVPTest(unittest.TestCase):
 
     def setUp(self):
-        self.rsvp = rsvp.RSVP('rsvp', filename='test.json')
+        self.rsvp = rsvp.RSVP('rsvp', FileBackend(filename='test.json'))
         self.issue_command('rsvp init')
         self.event = self.get_test_event()
 

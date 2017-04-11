@@ -6,6 +6,8 @@ import zulip
 import rsvp
 import zulip_users
 
+from backends import FileBackend
+
 
 class Bot():
     """ bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
@@ -18,7 +20,14 @@ class Bot():
         self.client = zulip.Client(zulip_username, zulip_api_key, site=zulip_site)
         self.client._register('get_users', method='GET', url='users')
         self.subscriptions = self.subscribe_to_streams()
-        self.rsvp = rsvp.RSVP(key_word)
+        self.rsvp = rsvp.RSVP(key_word, self.get_backend)
+
+
+    def get_backend(self):
+        """
+        Return an instance of a backend class that this bot will use
+        """
+        return FileBackend(filename='events.json')
 
     @property
     def streams(self):
