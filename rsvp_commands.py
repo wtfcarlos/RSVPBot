@@ -532,6 +532,7 @@ class RSVPCreditsCommand(RSVPEventNeededCommand):
       "Jérémie Jost (S1'16)",
       "Amulya Reddy (S1'16)",
       "James J. Porter (S'13)",
+      "Kracekumar (F2'16)",
     ]
 
     testers = ["Nikki Bee (SP2'15)", "Anthony Burdi (SP1'15)", "Noella D'sa (SP2'15)", "Mudit Ameta (SP2'15)"]
@@ -564,7 +565,9 @@ class RSVPSummaryCommand(RSVPEventNeededCommand):
     if event['description']:
         summary_table += '**What**|%s\n' % event['description']
 
+    date = datetime.datetime.strptime(event['date'], '%Y-%m-%d').date()
     summary_table += '**When**|%s @ %s\n' % (event['date'], event['time'] or '(All day)')
+    summary_table += '**Day**|%s \n' % (date.strftime("%A"))
 
     if event['duration']:
         summary_table += '**Duration**|%s\n' % datetime.timedelta(seconds=event['duration'])

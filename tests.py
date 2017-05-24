@@ -712,6 +712,11 @@ class RSVPSummaryTest(RSVPTest):
         output = self.issue_command('rsvp summary')
         self.assertIn('Testing', output[0]['body'])
 
+    def test_rsvp_weekday(self):
+        self.issue_command('rsvp set date 2/25/2100')
+        output = self.issue_command('rsvp summary')
+        self.assertIn('**Day**|Thursday', output[0]['body'])
+
 
 class RSVPPingTest(RSVPTest):
     def test_ping_yes(self):
