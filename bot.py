@@ -10,9 +10,9 @@ from backends import FileBackend
 
 
 class Bot():
-    """ bot takes a zulip username and api key, a word or phrase to respond to, a search string for giphy,
-        an optional caption or list of captions, and a list of the zulip streams it should be active in.
-        it then posts a caption and a randomly selected gif in response to zulip messages.
+    """ bot takes a zulip username and api key, a word or phrase to respond to,
+        an optional list of the zulip streams it should be active in,
+        and the zulip site to connect to.
      """
     def __init__(self, zulip_username, zulip_api_key, key_word, subscribed_streams=None, zulip_site=None):
         self.key_word = key_word.lower()
@@ -90,8 +90,6 @@ class Bot():
     Zulip will give you a username and API key
     key_word is the text in Zulip you would like the bot to respond to. This may be a
         single word or a phrase.
-    search_string is what you want the bot to search giphy for.
-    caption may be one of: [] OR 'a single string' OR ['or a list', 'of strings']
     subscribed_streams is a list of the streams the bot should be active on. An empty
         list defaults to ALL zulip streams
 
