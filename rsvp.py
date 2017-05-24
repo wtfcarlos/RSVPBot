@@ -8,13 +8,14 @@ from strings import ERROR_INVALID_COMMAND
 
 class RSVP(object):
 
-  def __init__(self, key_word, filename='events.json'):
+  def __init__(self, key_word, backend):
     """
-    When created, this instance will try to open self.filename. It will always
-    keep a copy in memory of the whole events dictionary and commit it when necessary.
+    keep a copy in memory of the whole events dictionary and commit it when necessary
+    to the supplied backend.
     """
+
+    self.backend = backend
     self.key_word = key_word
-    self.filename = filename
     self.command_list = (
       rsvp_commands.RSVPInitCommand(key_word),
       rsvp_commands.RSVPHelpCommand(key_word),
@@ -35,19 +36,11 @@ class RSVP(object):
       rsvp_commands.RSVPConfirmCommand(key_word)
     )
 
-    try:
-      with open(self.filename, "r") as f:
-        try:
-          self.events = json.load(f)
-        except ValueError:
-          self.events = {}
-    except IOError:
-      self.events = {}
+    self.events = self.backend.get_all_events()
 
   def commit_events(self):
-    """Write the whole events dictionary to the filename file."""
-    with open(self.filename, 'w+') as f:
-      json.dump(self.events, f)
+    """Write the whole events dictionary to the backend."""
+    self.backend.commit_events(self.events)
 
   def __exit__(self, type, value, traceback):
     """Before the program terminates, commit events."""
